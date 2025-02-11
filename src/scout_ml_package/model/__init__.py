@@ -3,7 +3,6 @@ from .base_model import (
     ModelPipeline,
     ModelTrainer,
     MultiOutputModel,
-    PredictionVisualizer,
     TrainedModel,
 )
 from .model_pipeline import (
@@ -18,7 +17,6 @@ __all__ = [
     "ModelTrainer",
     "ModelPipeline",
     "TrainingPipeline",
-    "PredictionVisualizer",
     "TrainedModel",
     "ModelHandlerInProd",
     "ModelManager",
