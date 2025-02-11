@@ -1,11 +1,15 @@
-import time
-import pandas as pd
 import logging
+import time
+
+import pandas as pd
 
 from scout_ml_package.utils.logger import Logger
 
 # Get the logger instance using the singleton pattern
-logger = Logger('demo_logger', '/data/model-data/logs', 'demo.log', log_level=logging.ERROR).get_logger()
+logger = Logger(
+    "demo_logger", "/data/model-data/logs", "demo.log", log_level=logging.ERROR
+).get_logger()
+
 
 class FakeListener:
     def __init__(self, task_ids, delay=3):
@@ -23,7 +27,6 @@ class FakeListener:
             # Wait for the specified delay
             time.sleep(self.delay)
             yield task_id
-
 
 
 class DataValidator:
@@ -52,42 +55,46 @@ class DataValidator:
         """
         try:
             cls.check_predictions(df, column, acceptable_ranges)
-            #logger.info(f"{column} predictions validated successfully.")
+            # logger.info(f"{column} predictions validated successfully.")
             return True
         except ValueError as ve:
             logger.error(f"{column} validation failed for JEDITASKID {jeditaskid}: {ve}")
             return False
         except Exception as e:
-            logger.error(f"Unexpected error during {column} validation for JEDITASKID {jeditaskid}: {e}")
+            logger.error(
+                f"Unexpected error during {column} validation for JEDITASKID {jeditaskid}: {e}"
+            )
             return False
-            
+
     @classmethod
     def validate_ctime_prediction(cls, df, jeditaskid, additional_ctime_ranges):
         """
         Validates CTIME predictions using alternative ranges.
-    
+
         Parameters:
         - df: DataFrame containing predictions.
         - jeditaskid: ID for logging purposes.
         - additional_ctime_ranges: Alternative ranges for CTIME validation.
-    
+
         Returns:
         - bool: True if validation succeeds, False otherwise.
         """
         try:
             if df["CPUTIMEUNIT"].values[0] == "mHS06sPerEvent":
-                cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["low"]})
+                cls.check_predictions(
+                    df, "CTIME", {"CTIME": additional_ctime_ranges["low"]}
+                )
                 logger.info("Validation passed with low CTIME range.")
                 return True
             else:
-                cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["high"]})
+                cls.check_predictions(
+                    df, "CTIME", {"CTIME": additional_ctime_ranges["high"]}
+                )
                 logger.info("Validation passed with high CTIME range.")
                 return True
         except ValueError as ve:
             logger.error(f"Validation failed with all ranges: {ve}")
             return False
-
-
 
 
 class DummyData:
@@ -138,7 +145,6 @@ class DummyData:
 #             yield task_id
 
 
-
 # class DataValidator:
 #     @classmethod
 #     def check_predictions(cls, df, column, acceptable_ranges):
@@ -173,17 +179,17 @@ class DummyData:
 #         except Exception as e:
 #             logger.error(f"Unexpected error during {column} validation for JEDITASKID {jeditaskid}: {e}")
 #             return False
-            
+
 #     @classmethod
 #     def validate_ctime_prediction(cls, df, jeditaskid, additional_ctime_ranges):
 #         """
 #         Validates CTIME predictions using alternative ranges.
-    
+
 #         Parameters:
 #         - df: DataFrame containing predictions.
 #         - jeditaskid: ID for logging purposes.
 #         - additional_ctime_ranges: Alternative ranges for CTIME validation.
-    
+
 #         Returns:
 #         - bool: True if validation succeeds, False otherwise.
 #         """
@@ -199,8 +205,6 @@ class DummyData:
 #         except ValueError as ve:
 #             logger.error(f"Validation failed with all ranges: {ve}")
 #             return False
-
-
 
 
 # class DummyData:
@@ -222,4 +226,3 @@ class DummyData:
 #             "DISTINCT_DATASETNAME_COUNT": [1, 3],
 #         }
 #         return pd.DataFrame(data)
-

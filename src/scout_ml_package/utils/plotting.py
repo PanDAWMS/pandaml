@@ -1,18 +1,18 @@
 import os
+
+import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import (
-    mean_absolute_error,
-    r2_score,
-    root_mean_squared_error,
-)
-import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from sklearn.metrics import (
+    ConfusionMatrixDisplay,
     accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
     classification_report,
+    confusion_matrix,
+    f1_score,
+    mean_absolute_error,
+    precision_score,
+    r2_score,
+    recall_score,
+    root_mean_squared_error,
 )
 
 
@@ -49,9 +49,7 @@ class ErrorMetricsPlotter:
 
     def print_metrics(self):
         mae, rmse, r2, mape = self.calculate_metrics()
-        print(
-            f"Metrics for {self.predicted_column} compared to {self.actual_column}:"
-        )
+        print(f"Metrics for {self.predicted_column} compared to {self.actual_column}:")
         print(f"Mean Absolute Error (MAE): {mae}")
         print(f"Root Mean Squared Error (RMSE): {rmse}")
         print(f"R-squared (R²): {r2}")
@@ -121,9 +119,7 @@ class ErrorMetricsPlotter:
         plt.title("Distribution of Actual and Predicted Values")
         plt.legend(loc="upper right")
 
-        plot_path = os.path.join(
-            self.plot_directory, f"plot_{self.predicted_column}.png"
-        )
+        plot_path = os.path.join(self.plot_directory, f"plot_{self.predicted_column}.png")
         plt.tight_layout()
         plt.savefig(plot_path)
         print(f"Plot saved to {plot_path}")
@@ -187,9 +183,7 @@ class ClassificationMetricsPlotter:
         )  # Use 'binary' for binary tasks
 
         # Print the evaluation metrics
-        print(
-            f"Metrics for {self.predicted_column} compared to {self.actual_column}:"
-        )
+        print(f"Metrics for {self.predicted_column} compared to {self.actual_column}:")
         print(f"Accuracy: {accuracy:.2f}")
         print(f"Precision: {precision:.2f}")
         print(f"Recall: {recall:.2f}")

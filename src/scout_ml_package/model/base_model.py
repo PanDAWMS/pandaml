@@ -1,28 +1,30 @@
 # # src/scout_ml_package/model/base_model.py
+import os
+from typing import Callable, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-from typing import Union, Callable, Optional, List, Tuple
-
 import tensorflow as tf
-from tensorflow.keras.models import Model
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers import (
-    Input,
-    Dense,
-    Conv1D,
     BatchNormalization,
-    MaxPooling1D,
-    Flatten,
+    Conv1D,
+    Dense,
     Dropout,
-    Lambda
+    Flatten,
+    Input,
+    Lambda,
+    MaxPooling1D,
 )
+from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from scout_ml_package.data import TrainingDataPreprocessor, NewDataPreprocessor
+
+from scout_ml_package.data import NewDataPreprocessor, TrainingDataPreprocessor
+
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 
 class DeviceInfo:
@@ -81,15 +83,9 @@ class MultiOutputModel:
             x, filters=32, kernel_size=3, activation="relu", pool_size=2
         )
         x = Flatten()(x)
-        x = self._add_dense_block(
-            x, units=512, dropout_rate=0.5, activation="relu"
-        )
-        x = self._add_dense_block(
-            x, units=256, dropout_rate=0.4, activation="relu"
-        )
-        x = self._add_dense_block(
-            x, units=64, dropout_rate=0.3, activation="sigmoid"
-        )
+        x = self._add_dense_block(x, units=512, dropout_rate=0.5, activation="relu")
+        x = self._add_dense_block(x, units=256, dropout_rate=0.4, activation="relu")
+        x = self._add_dense_block(x, units=64, dropout_rate=0.3, activation="sigmoid")
         outputs = Dense(self.output_shape, activation="relu")(x)
 
         model = Model(inputs, outputs)
@@ -101,10 +97,9 @@ class MultiOutputModel:
         self.model = model
         return model
 
-    
     def custom_activation_low(self, x):
         return tf.clip_by_value(x, 0.4, 8.5)
-        
+
     def build_cputime_low(self) -> Model:
         """Build and compile the model for CPU time prediction."""
         inputs = Input(shape=(self.input_shape,))
@@ -113,34 +108,32 @@ class MultiOutputModel:
             x, filters=128, kernel_size=3, activation="relu", pool_size=2
         )
         x = Flatten()(x)
-        x = self._add_dense_block(
-            x, units=128, dropout_rate=0.4, activation="swish"
-        )
-        x = self._add_dense_block(
-            x, units=64, dropout_rate=0.3, activation="relu"
-        )
+        x = self._add_dense_block(x, units=128, dropout_rate=0.4, activation="swish")
+        x = self._add_dense_block(x, units=64, dropout_rate=0.3, activation="relu")
         outputs = Dense(self.output_shape)(x)
         outputs = tf.keras.layers.Lambda(self.custom_activation_low)(outputs)
         model = Model(inputs, outputs)
         model.compile(
             optimizer=self.optimizer,
-            loss= self.loss_function,
+            loss=self.loss_function,
             metrics=["RootMeanSquaredError", "mean_squared_error"],
         )
         self.model = model
         return model
-        
+
     def weighted_mae(self, y_true, y_pred):
         mae = tf.abs(y_true - y_pred)
         # Progressive weighting for different ranges
-        weights = tf.where(y_true > 3000, 4.0,
-                      tf.where(y_true > 2000, 2.5,
-                              tf.where(y_true > 1000, 2.0, 1.0)))
+        weights = tf.where(
+            y_true > 3000,
+            4.0,
+            tf.where(y_true > 2000, 2.5, tf.where(y_true > 1000, 2.0, 1.0)),
+        )
         return tf.reduce_mean(weights * mae)
-    
+
     def custom_activation_high(self, x):
         return tf.clip_by_value(x, 10, 5000)
-        
+
     def build_cputime_high0(self) -> Model:
         """Build and compile the model for CPU time prediction."""
         inputs = Input(shape=(self.input_shape,))
@@ -149,21 +142,16 @@ class MultiOutputModel:
             x, filters=512, kernel_size=3, activation="swish", pool_size=2
         )
         x = Flatten()(x)
-        x = self._add_dense_block(
-            x, units=512, dropout_rate=0.4, activation="swish"
-        )
-        x = self._add_dense_block(
-            x, units=256, dropout_rate=0.3, activation="relu"
-        )
-        x = self._add_dense_block(
-            x, units=128, dropout_rate=0.3, activation="relu"
-        )
-        outputs = Dense(self.output_shape, activation='linear')(x)
+        x = self._add_dense_block(x, units=512, dropout_rate=0.4, activation="swish")
+        x = self._add_dense_block(x, units=256, dropout_rate=0.3, activation="relu")
+        x = self._add_dense_block(x, units=128, dropout_rate=0.3, activation="relu")
+        outputs = Dense(self.output_shape, activation="linear")(x)
         outputs = tf.keras.layers.Lambda(self.custom_activation_high)(outputs)
         model = Model(inputs, outputs)
         model.compile(
-            optimizer=self.optimizer,#tf.keras.optimizers.Adam(learning_rate=0.001), #
-            loss= self.weighted_mae,#self.loss_function,#self.weighted_mae, #
+            # tf.keras.optimizers.Adam(learning_rate=0.001), #
+            optimizer=self.optimizer,
+            loss=self.weighted_mae,  # self.loss_function,#self.weighted_mae, #
             metrics=["RootMeanSquaredError"],
         )
         self.model = model
@@ -179,29 +167,25 @@ class MultiOutputModel:
         x = self._add_conv_block(
             x, filters=512, kernel_size=3, activation="relu", pool_size=2
         )
-        #x = self._add_conv_block(
+        # x = self._add_conv_block(
         #    x, filters=256, kernel_size=2, activation="relu", pool_size=2
-        #)
+        # )
         # x = self._add_conv_block(
         #     x, filters=32, kernel_size=2, activation="relu", pool_size=2
         # )
         x = Flatten()(x)
-        x = self._add_dense_block(
-            x, units=256, dropout_rate=0.4, activation="swish"
-        )
+        x = self._add_dense_block(x, units=256, dropout_rate=0.4, activation="swish")
         # x = self._add_dense_block(
         #     x, units=256, dropout_rate=0.3, activation="sigmoid"
         # )
-        x = self._add_dense_block(
-            x, units=128, dropout_rate=0.3, activation="relu"
-        )
-        #outputs = Dense(self.output_shape, activation='linear')(x)
-        #outputs = tf.keras.layers.Lambda(self.custom_activation_high)(outputs)
+        x = self._add_dense_block(x, units=128, dropout_rate=0.3, activation="relu")
+        # outputs = Dense(self.output_shape, activation='linear')(x)
+        # outputs = tf.keras.layers.Lambda(self.custom_activation_high)(outputs)
         outputs = Dense(self.output_shape)(x)
         model = Model(inputs, outputs)
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), # self.optimizer,#
-            loss= self.loss_function,#self.weighted_mae, #
+            optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),  # self.optimizer,#
+            loss=self.loss_function,  # self.weighted_mae, #
             metrics=["RootMeanSquaredError", "mean_absolute_error"],
         )
         self.model = model
@@ -238,12 +222,8 @@ class MultiOutputModel:
             x, filters=128, kernel_size=5, activation="relu", pool_size=2
         )
         x = Flatten()(x)
-        x = self._add_dense_block(
-            x, units=256, dropout_rate=0.5, activation="relu"
-        )
-        x = self._add_dense_block(
-            x, units=128, dropout_rate=0.3, activation="relu"
-        )
+        x = self._add_dense_block(x, units=256, dropout_rate=0.5, activation="relu")
+        x = self._add_dense_block(x, units=128, dropout_rate=0.3, activation="relu")
         outputs = Dense(self.output_shape)(x)
         model = Model(inputs, outputs)
         model.compile(
@@ -254,12 +234,13 @@ class MultiOutputModel:
         self.model = model
         return model
 
-
     def custom_loss_cpu_eff(self, y_true, y_pred):
         mse = tf.keras.losses.mean_squared_error(y_true, y_pred)
-        range_penalty = tf.reduce_mean(tf.maximum(0.0, 1.0 - y_pred) + tf.maximum(0.0, y_pred - 99.0))
+        range_penalty = tf.reduce_mean(
+            tf.maximum(0.0, 1.0 - y_pred) + tf.maximum(0.0, y_pred - 99.0)
+        )
         return mse + 10.0 * range_penalty
-        
+
     def build_cpu_eff(self) -> Model:
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
@@ -270,16 +251,12 @@ class MultiOutputModel:
             x, filters=128, kernel_size=3, activation="relu", pool_size=2
         )
         x = Flatten()(x)
-        x = self._add_dense_block(
-            x, units=512, dropout_rate=0.4, activation="relu"
-        )
-        x = self._add_dense_block(
-            x, units=256, dropout_rate=0.3, activation="relu"
-        )
+        x = self._add_dense_block(x, units=512, dropout_rate=0.4, activation="relu")
+        x = self._add_dense_block(x, units=256, dropout_rate=0.3, activation="relu")
         x = Dense(1)(x)
         outputs = Lambda(lambda x: tf.clip_by_value(x, 1, 99))(x)
         model = Model(inputs, outputs)
-        
+
         model.compile(
             optimizer=self.optimizer,
             loss=self.custom_loss_cpu_eff,
@@ -287,8 +264,8 @@ class MultiOutputModel:
         )
         self.model = model
         return model
-        
-    def build_io(self ) -> Model:
+
+    def build_io(self) -> Model:
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
 
@@ -296,15 +273,18 @@ class MultiOutputModel:
         x = self._add_conv_block(x, filters=512, kernel_size=7)
         x = self._add_conv_block(x, filters=128, kernel_size=3)
         x = Flatten()(x)
-        #x = self._add_dense_block(x, units=512, dropout_rate=0.5,act='sigmoid')
-        x = self._add_dense_block(x, units=256, dropout_rate=0.4,activation='sigmoid')
-        x = self._add_dense_block(x, units=64, dropout_rate=0.3,activation='relu')
+        # x = self._add_dense_block(x, units=512, dropout_rate=0.5,act='sigmoid')
+        x = self._add_dense_block(x, units=256, dropout_rate=0.4, activation="sigmoid")
+        x = self._add_dense_block(x, units=64, dropout_rate=0.3, activation="relu")
 
         # Use output_shape here
-        outputs = Dense(self.output_shape, activation='relu')(x)
+        outputs = Dense(self.output_shape, activation="relu")(x)
         model = Model(inputs, outputs)
-        model.compile(optimizer=self.optimizer, loss=self.loss_function,
-                      metrics=['accuracy'])
+        model.compile(
+            optimizer=self.optimizer,
+            loss=self.loss_function,
+            metrics=["accuracy"],
+        )
 
         self.model = model
         return model
@@ -336,9 +316,7 @@ class MultiOutputModel:
         activation: str = "relu",
     ) -> tf.Tensor:
         """Add a dense block to the model."""
-        x = Dense(
-            units, activation=activation, kernel_regularizer=self.regularizer
-        )(x)
+        x = Dense(units, activation=activation, kernel_regularizer=self.regularizer)(x)
         x = Dropout(dropout_rate)(x)
         x = BatchNormalization()(x)
         return x
@@ -353,8 +331,8 @@ class MultiOutputModel:
                 tf.reduce_mean(tf.square(y_true - y_pred))
             ),
             "huber": tf.keras.losses.Huber(delta=7.0),
-            'categorical_crossentropy': tf.keras.losses.CategoricalCrossentropy(),
-            'binary_crossentropy': tf.keras.losses.BinaryCrossentropy(),
+            "categorical_crossentropy": tf.keras.losses.CategoricalCrossentropy(),
+            "binary_crossentropy": tf.keras.losses.BinaryCrossentropy(),
         }
         if loss_function not in loss_functions:
             raise ValueError(f"Unknown loss function: {loss_function}")
@@ -468,9 +446,7 @@ class TrainedModel:
         """Make predictions using the trained model."""
         return self.model.predict(X)
 
-    def evaluate(
-        self, X_test: pd.DataFrame, y_test: pd.DataFrame
-    ) -> pd.DataFrame:
+    def evaluate(self, X_test: pd.DataFrame, y_test: pd.DataFrame) -> pd.DataFrame:
         """
         Evaluate the model's performance.
 
@@ -494,13 +470,9 @@ class TrainedModel:
             metrics[f"Target {i + 1} (MAE)"] = mae
             metrics[f"Target {i + 1} (R²)"] = r2
 
-        overall_mse = mean_squared_error(
-            y_test, y_pred, multioutput="uniform_average"
-        )
+        overall_mse = mean_squared_error(y_test, y_pred, multioutput="uniform_average")
         overall_rmse = np.sqrt(overall_mse)
-        overall_mae = mean_absolute_error(
-            y_test, y_pred, multioutput="uniform_average"
-        )
+        overall_mae = mean_absolute_error(y_test, y_pred, multioutput="uniform_average")
         overall_r2 = r2_score(y_test, y_pred, multioutput="uniform_average")
         metrics["Overall (MSE)"] = overall_mse
         metrics["Overall (RMSE)"] = overall_rmse
@@ -512,12 +484,7 @@ class TrainedModel:
     def save(self, save_path: str):
         """Save the trained model."""
         self.model.save(f"{save_path}/{self.model_name}.keras")
-        print(
-            f"Model '{self.model_name}' saved at {save_path}/{self.model_name}.keras"
-        )
-
-
-
+        print(f"Model '{self.model_name}' saved at {save_path}/{self.model_name}.keras")
 
 
 class ModelPipeline:
@@ -548,9 +515,7 @@ class ModelPipeline:
         from scout_ml_package.data.data_manager import DataSplitter
 
         splitter = DataSplitter(self.training_data, self.selected_columns)
-        self.train_df, self.test_df = splitter.split_data(
-            test_size=self.test_size
-        )
+        self.train_df, self.test_df = splitter.split_data(test_size=self.test_size)
 
     def preprocess_data(
         self,

@@ -1,13 +1,17 @@
 import oracledb
 import pandas as pd
-from scout_ml_package.data.fetch_db_data import DatabaseFetcher
-import sqlite3
-oracledb.init_oracle_client(config_dir='/data/model-data/configs', lib_dir="/opt/oracle/instantclient/instantclient_19_25")
 
-base_path = "/data/model-data/" 
+from scout_ml_package.data.fetch_db_data import DatabaseFetcher
+
+oracledb.init_oracle_client(
+    config_dir="/data/model-data/configs",
+    lib_dir="/opt/oracle/instantclient/instantclient_19_25",
+)
+
+base_path = "/data/model-data/"
 # Create instances for input and output databases
-input_db = DatabaseFetcher('database')
-output_db = DatabaseFetcher('output_database')
+input_db = DatabaseFetcher("database")
+output_db = DatabaseFetcher("output_database")
 
 # Check if connections are loaded successfully
 input_connection_status = input_db.conn is not None

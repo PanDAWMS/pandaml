@@ -2,31 +2,25 @@
 __author__ = "Tasnuva Chowdhury"
 __email__ = "ch.tasnuva@cern.ch"
 
-# Importing necessary components from submodules
-from .model.base_model import (
-    MultiOutputModel,
-    ModelTrainer,
-    TrainedModel,
-    ModelPipeline,
-)  # Import your model classes
 from .data.data_manager import (
-    HistoricalDataProcessor,
-    DataSplitter,
-    ModelTrainingInput,
-    CategoricalEncoder,
     BaseDataPreprocessor,
-    TrainingDataPreprocessor,
-    NewDataPreprocessor,
+    CategoricalEncoder,
+    DataSplitter,
+    HistoricalDataProcessor,
     LiveDataPreprocessor,
+    ModelTrainingInput,
+    NewDataPreprocessor,
+    TrainingDataPreprocessor,
 )
 from .data.fetch_db_data import DatabaseFetcher
-from .model.model_pipeline import (
-    TrainingPipeline,
-    ModelHandlerInProd,
-)  # ModelLoader,
-from .utils.plotting import ErrorMetricsPlotter, ClassificationMetricsPlotter
-from .utils.validator import FakeListener, DummyData, DataValidator
-from .utils.logger import Logger  
+
+# Importing necessary components from submodules
+from .model.base_model import ModelPipeline  # Import your model classes
+from .model.base_model import ModelTrainer, MultiOutputModel, TrainedModel
+from .model.model_pipeline import ModelHandlerInProd, TrainingPipeline  # ModelLoader,
+from .utils.logger import Logger
+from .utils.plotting import ClassificationMetricsPlotter, ErrorMetricsPlotter
+from .utils.validator import DataValidator, DummyData, FakeListener
 
 __all__ = [
     "HistoricalDataProcessor",
@@ -55,9 +49,7 @@ __all__ = [
 ]
 
 # Optional: Example of initializing common configurations
-DEFAULT_INPUT_SHAPE = (
-    10  # Set a default value for input shape, adjust as necessary
-)
+DEFAULT_INPUT_SHAPE = 10  # Set a default value for input shape, adjust as necessary
 
 
 # Any additional initialization or configuration that is common and should be done on package load can be added here.

@@ -1,0 +1,75 @@
+#pre-commit run --all-files
+#autopep8 -i --recursive .
+#autoflake -i --remove-unused-variables
+#pre-commit install
+#pre-commit run --all-files
+#pre-commit autoupdate
+#autopep8 -i --recursive .
+#autoflake -i --remove-unused-variables .repos:
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        name: black
+        entry: black
+        language: python
+        types: [python]
+        additional_dependencies:
+          - black[jupyter]
+        args:
+          - --line-length
+          - "90"
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        name: autoflake
+        entry: autoflake
+        language: python
+        types: [python]
+        additional_dependencies:
+          - autoflake
+        args:
+          - --in-place
+          - --remove-all-unused-imports
+          - --remove-unused-variables
+          - --recursive
+
+#  - repo: https://github.com/PyCQA/flake8
+#    rev: 6.0.0
+#    hooks:
+#      - id: flake8
+#        name: flake8
+#        entry: flake8
+#        language: python
+#        types: [python]
+#        additional_dependencies:
+#          - flake8-bandit
+#          - flake8-bugbear
+#        args:
+#          - --max-line-length=120
+#          - --ignore=E501
+
+
+#  - repo: https://github.com/PyCQA/flake8
+#    rev: 6.0.0
+#    hooks:
+#      - id: flake8
+#        name: flake8
+#        entry: flake8
+#        language: system
+#        types: [python]
+#        exclude: ^src/scout_ml_package/data/
+#        additional_dependencies:
+#          - flake8-bandit
+#          - flake8-bugbear
+#

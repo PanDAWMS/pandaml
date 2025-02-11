@@ -1,9 +1,10 @@
 # # src/scout_ml_package/data/data_manager.py
 
+from typing import List, Tuple
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
-from typing import List, Tuple
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 
 class HistoricalDataProcessor:
@@ -17,9 +18,7 @@ class HistoricalDataProcessor:
         """
         self.task_data = pd.read_parquet(task_data_path)
         self.additional_data = (
-            pd.read_parquet(additional_data_path)
-            if additional_data_path
-            else None
+            pd.read_parquet(additional_data_path) if additional_data_path else None
         )
         self.merged_data = None
 
@@ -57,9 +56,9 @@ class HistoricalDataProcessor:
             columns=["PROCESSINGTYPE", "P50", "F50", "PRED_RAM", "TRANSHOME"],
             errors="ignore",
         )
-        self.merged_data["IOIntensity"] = self.merged_data[
-            "IOINTENSITY"
-        ].apply(lambda x: "low" if x < 500 else "high")
+        self.merged_data["IOIntensity"] = self.merged_data["IOINTENSITY"].apply(
+            lambda x: "low" if x < 500 else "high"
+        )
 
         return self.merged_data[
             self.merged_data["PRODSOURCELABEL"].isin(["user", "managed"])
@@ -73,9 +72,7 @@ class HistoricalDataProcessor:
 
 
 class DataSplitter:
-    def __init__(
-        self, filtered_data: pd.DataFrame, selected_columns: List[str]
-    ):
+    def __init__(self, filtered_data: pd.DataFrame, selected_columns: List[str]):
         """
         Initialize the DataSplitter with filtered data and selected columns.
 
@@ -183,9 +180,7 @@ class CategoricalEncoder:
         """
         encoder = OneHotEncoder(categories=category_list, sparse_output=False)
         encoded_features = encoder.fit_transform(df[columns_to_encode])
-        encoded_feature_names = encoder.get_feature_names_out(
-            columns_to_encode
-        )
+        encoded_feature_names = encoder.get_feature_names_out(columns_to_encode)
         encoded_df = pd.DataFrame(
             encoded_features, columns=encoded_feature_names, index=df.index
         )
@@ -202,18 +197,14 @@ class BaseDataPreprocessor:
         """Fit and transform numerical features."""
         if numerical_features:
             self.scaler.fit(df[numerical_features])
-            df[numerical_features] = self.scaler.transform(
-                df[numerical_features]
-            )
+            df[numerical_features] = self.scaler.transform(df[numerical_features])
         return df
 
     def _encode_features(
         self, df: pd.DataFrame, categorical_features: list, category_list: list
     ):
         """Encode categorical features."""
-        return CategoricalEncoder.one_hot_encode(
-            df, categorical_features, category_list
-        )
+        return CategoricalEncoder.one_hot_encode(df, categorical_features, category_list)
 
 
 class TrainingDataPreprocessor(BaseDataPreprocessor):
@@ -267,12 +258,8 @@ class NewDataPreprocessor(BaseDataPreprocessor):
         Returns:
             pd.DataFrame: Preprocessed new data.
         """
-        new_data[numerical_features] = scaler.transform(
-            new_data[numerical_features]
-        )
-        new_data, _ = self._encode_features(
-            new_data, categorical_features, category_list
-        )
+        new_data[numerical_features] = scaler.transform(new_data[numerical_features])
+        new_data, _ = self._encode_features(new_data, categorical_features, category_list)
         for col in encoded_columns:
             if col not in new_data.columns:
                 new_data[col] = 0
@@ -302,9 +289,7 @@ class LiveDataPreprocessor(BaseDataPreprocessor):
             Tuple[pd.DataFrame, List[str]]: Preprocessed live data and list of encoded column names.
         """
         live_data = live_data.copy()
-        live_data[numerical_features] = scaler.transform(
-            live_data[numerical_features]
-        )
+        live_data[numerical_features] = scaler.transform(live_data[numerical_features])
         live_data, encoded_columns = self._encode_features(
             live_data, categorical_features, category_list
         )

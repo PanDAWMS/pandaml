@@ -1,16 +1,16 @@
 # src/scout_ml_package/model/__init__.py
 from .base_model import (
-    MultiOutputModel,
-    ModelTrainer,
-    TrainedModel,
-    PredictionVisualizer,
     ModelPipeline,
+    ModelTrainer,
+    MultiOutputModel,
+    PredictionVisualizer,
+    TrainedModel,
 )
 from .model_pipeline import (
-    TrainingPipeline,
     ModelHandlerInProd,
     ModelManager,
     PredictionPipeline,
+    TrainingPipeline,
 )
 
 __all__ = [

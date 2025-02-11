@@ -1,25 +1,26 @@
 # src/scout_ml_package/model/model_pipeline.py
 import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import re
+
+import joblib
+import numpy as np
 import tensorflow as tf
+from keras.layers import TFSMLayer
+
+from scout_ml_package.data import (
+    LiveDataPreprocessor,
+    NewDataPreprocessor,
+    TrainingDataPreprocessor,
+)
 from scout_ml_package.model import MultiOutputModel
 from scout_ml_package.model.base_model import ModelTrainer  # , ModelPipeline
-from scout_ml_package.data import (
-    TrainingDataPreprocessor,
-    NewDataPreprocessor,
-    LiveDataPreprocessor,
-)
-import numpy as np
-import joblib
-import re
-from keras.layers import TFSMLayer
+
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 
 class TrainingPipeline:
-    def __init__(
-        self, numerical_features, categorical_features, category_list, m_target
-    ):
+    def __init__(self, numerical_features, categorical_features, category_list, m_target):
         self.numerical_features = numerical_features
         self.categorical_features = categorical_features
         self.category_list = category_list
@@ -207,9 +208,9 @@ class TrainingPipeline:
         )
 
         # Convert actual values back to 'low' or 'high' for consistency
-        predicted_df[self.model_target] = predicted_df[
-            self.model_target
-        ].replace({0: "low", 1: "high"})
+        predicted_df[self.model_target] = predicted_df[self.model_target].replace(
+            {0: "low", 1: "high"}
+        )
         return predicted_df, y_pred_text
 
 
@@ -232,26 +233,18 @@ class ModelHandlerInProd:
             if base_path is None:
                 base_path = os.getcwd()
             model_storage_path = os.path.abspath(
-                os.path.join(
-                    base_path, f"ModelStorage/model{self.model_sequence}/"
-                )
+                os.path.join(base_path, f"ModelStorage/model{self.model_sequence}/")
             )
 
             # Load scaler and model
-            self.scaler = joblib.load(
-                os.path.join(model_storage_path, "scaler.pkl")
-            )
+            self.scaler = joblib.load(os.path.join(model_storage_path, "scaler.pkl"))
             model_name = f"model{self.model_sequence}_{self.target_name}"
             model_full_path = os.path.join(model_storage_path, model_name)
 
             # Assuming TFSMLayer is a custom class for loading TensorFlow models
-            self.model = TFSMLayer(
-                model_full_path, call_endpoint="serving_default"
-            )
+            self.model = TFSMLayer(model_full_path, call_endpoint="serving_default")
 
-            print(
-                f"Model and scaler for {self.target_name} loaded successfully."
-            )
+            print(f"Model and scaler for {self.target_name} loaded successfully.")
         except Exception as e:
             print(f"Error loading model and scaler: {e}")
 
@@ -264,9 +257,7 @@ class ModelHandlerInProd:
     ):
         """Preprocess the data using the loaded scaler."""
         required_columns = numerical_features + category_sequence
-        missing_columns = [
-            col for col in required_columns if col not in df.columns
-        ]
+        missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             print(f"Missing columns in input DataFrame: {missing_columns}")
             return None, None  # Or raise an exception based on your use case
@@ -290,9 +281,7 @@ class ModelHandlerInProd:
         predicted_tensor = predictions[
             "output_0"
         ]  # Adjust the key based on actual output
-        predicted_values = (
-            predicted_tensor.numpy()
-        )  # Convert tensor to NumPy array
+        predicted_values = predicted_tensor.numpy()  # Convert tensor to NumPy array
 
         # Check if this is a classification model (model 5)
         if self.model_sequence == "5":
@@ -330,9 +319,7 @@ class ModelManager:
             ("5", "io"),
         ]
         for sequence, target_name in model_configs:
-            model = ModelHandlerInProd(
-                model_sequence=sequence, target_name=target_name
-            )
+            model = ModelHandlerInProd(model_sequence=sequence, target_name=target_name)
             model.load_model_and_scaler(self.base_path)
             self.models[sequence] = model
         # logger.info("All models loaded successfully")
@@ -351,26 +338,47 @@ class PredictionPipeline:
             "DISTINCT_DATASETNAME_COUNT",
         ]
         self.category_sequence = [
-            'PRODSOURCELABEL', 
-            'P', 
-            'F', 
-            'CORE', 
-            'CPUTIMEUNIT'
+            "PRODSOURCELABEL",
+            "P",
+            "F",
+            "CORE",
+            "CPUTIMEUNIT",
         ]
         self.unique_elements_categories = [
-            ['managed', 'user'], 
-            ['simul', 'jedi-run', 'deriv', 'pile', 'reprocessing', 'merge', 'jedi-athena', 'athena-trf', 'evgen', 'eventIndex', 'others', 'recon'], 
-            ['Athena', 'AnalysisBase', 'AthDerivation', 'AthAnalysis', 'AthGeneration', 'AtlasOffline', 'AthSimulation', 'others', 'MCProd'], 
-            ['M', 'S'], 
-            ['HS06sPerEvent', 'mHS06sPerEvent']
+            ["managed", "user"],
+            [
+                "simul",
+                "jedi-run",
+                "deriv",
+                "pile",
+                "reprocessing",
+                "merge",
+                "jedi-athena",
+                "athena-trf",
+                "evgen",
+                "eventIndex",
+                "others",
+                "recon",
+            ],
+            [
+                "Athena",
+                "AnalysisBase",
+                "AthDerivation",
+                "AthAnalysis",
+                "AthGeneration",
+                "AtlasOffline",
+                "AthSimulation",
+                "others",
+                "MCProd",
+            ],
+            ["M", "S"],
+            ["HS06sPerEvent", "mHS06sPerEvent"],
         ]
 
     def preprocess_data(self, df):
         # Convert PROCESSINGTYPE to 'P'
         def convert_processingtype(processingtype):
-            if processingtype is not None and re.search(
-                r"-.*-", processingtype
-            ):
+            if processingtype is not None and re.search(r"-.*-", processingtype):
                 return "-".join(processingtype.split("-")[-2:])
             return processingtype
 
@@ -411,11 +419,11 @@ class PredictionPipeline:
             "DISTINCT_DATASETNAME_COUNT",
         ]
         categorical_features = [
-            'PRODSOURCELABEL', 
-            'P', 
-            'F', 
-            'CORE', 
-            'CPUTIMEUNIT'
+            "PRODSOURCELABEL",
+            "P",
+            "F",
+            "CORE",
+            "CPUTIMEUNIT",
         ]
         ["JEDITASKID"] + numerical_features + categorical_features
 
@@ -425,9 +433,7 @@ class PredictionPipeline:
         try:
             mh = self.model_manager.get_model(model_sequence)
             if mh is None:
-                raise ValueError(
-                    f"Model with sequence {model_sequence} not found"
-                )
+                raise ValueError(f"Model with sequence {model_sequence} not found")
 
             processed_data, features_to_train = mh.preprocess_data(
                 input_df[features],
@@ -437,7 +443,5 @@ class PredictionPipeline:
             )
             return mh.make_predictions(processed_data, features_to_train)
         except Exception as e:
-            print(
-                f"Error processing data with model sequence {model_sequence}: {e}"
-            )
+            print(f"Error processing data with model sequence {model_sequence}: {e}")
             return None
