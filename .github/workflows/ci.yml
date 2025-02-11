@@ -30,12 +30,19 @@ jobs:
           pip install -r requirements.txt
  
 
-#      # Step 4: Run linters (e.g., Flake8)
-#      - name: Run linter
-#        run: |
-#          pip install flake8
-#          flake8 src/scout_ml_package
+      # Step 4: Run linters and auto-fix issues
+      - name: Run linter and auto-fix
+        run: |
+          pip install flake8 black
+          flake8 src/scout_ml_package
+          black src/scout_ml_package
 
+      # Step 5: Commit auto-fixed changes
+      - name: Commit auto-fixed changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 'chore: auto-fix linting issues'
+          github_token: ${{ secrets.G_TOKEN }}
 #      # Step 5: Run tests (using pytest)
 #      - name: Run tests
 #        run: |
