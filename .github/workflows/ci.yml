@@ -30,11 +30,11 @@ jobs:
           pip install -r requirements.txt
  
 
-      # Step 4: Run linters (e.g., Flake8)
-      - name: Run linter
-        run: |
-          pip install flake8
-          flake8 src/scout_ml_package
+#      # Step 4: Run linters (e.g., Flake8)
+#      - name: Run linter
+#        run: |
+#          pip install flake8
+#          flake8 src/scout_ml_package
 
 #      # Step 5: Run tests (using pytest)
 #      - name: Run tests

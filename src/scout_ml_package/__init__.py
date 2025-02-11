@@ -1,4 +1,6 @@
 # src/scout_ml_package/__init__.py
+__author__ = "Tasnuva Chowdhury"
+__email__ = "ch.tasnuva@cern.ch"
 
 # Importing necessary components from submodules
 from .model.base_model import (
