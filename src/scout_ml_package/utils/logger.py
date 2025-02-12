@@ -1,17 +1,13 @@
-# File: scout_ml_package/utils/logger.py
 import logging
 import os
-
 
 class Logger:
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(Logger, cls).__new__(
-                cls
-            )  # Create instance without args
-            cls._instance.init(*args, **kwargs)  # Initialize with args
+            cls._instance = super(Logger, cls).__new__(cls)
+            cls._instance.init(*args, **kwargs)
         return cls._instance
 
     def init(
@@ -22,7 +18,6 @@ class Logger:
         log_level=logging.DEBUG,
         console_level=logging.INFO,
     ):
-        # Your logger configuration code here
         self.logger = self.configure_logger(
             logger_name, log_dir_path, log_file_name, log_level, console_level
         )
@@ -82,7 +77,34 @@ class Logger:
         logger.addHandler(file_handler)
         logger.addHandler(stream_handler)
 
+        # Log a message to ensure the logger is working
+        logger.info(f"Logger initialized. Logging to file: {log_file_path}")
+
         return logger
 
     def get_logger(self):
         return self.logger
+
+    def debug(self, message):
+        self.logger.debug(message)
+
+    def info(self, message):
+        self.logger.info(message)
+
+    def warning(self, message):
+        self.logger.warning(message)
+
+    def error(self, message):
+        self.logger.error(message)
+
+    def critical(self, message):
+        self.logger.critical(message)
+
+# Example usage
+#logger = Logger('demo_logger', '/data/model-data/logs', 'pred.log')
+#logger.get_logger().debug("This is a debug message.")
+#logger.get_logger().info("This is an info message.")
+#logger.get_logger().warning("This is a warning message.")
+#logger.get_logger().error("This is an error message.")
+#logger.get_logger().critical("This is a critical message.")
+

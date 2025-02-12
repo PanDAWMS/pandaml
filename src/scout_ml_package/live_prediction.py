@@ -9,12 +9,9 @@ from scout_ml_package.utils.logger import Logger
 from scout_ml_package.utils.validator import DataValidator, DummyData
 from scout_ml_package.utils.message import TaskIDListener
 
-# logger = configure_logger('prediction_logger', '/data/model-data/logs/prediction_logger.log')
-# logger = configure_logger('demo_logger', '/data/model-data/logs', 'pred.log')
 
-
-logger = Logger("demo_logger", "/data/model-data/logs", "pred.log").get_logger()
-
+#logger = Logger("demo_logger", "/data/model-data/logs", "pred.log").get_logger()
+logger = Logger('demo_logger', '/data/model-data/logs', 'demo.log')
 # Define acceptable ranges for each prediction
 acceptable_ranges = {
     # Adjust these ranges based on your domain knowledge
@@ -25,15 +22,15 @@ acceptable_ranges = {
 
 additional_ctime_ranges = {
     "low": (0.1, 10),
-    "high": (500, 10000),
+    "high": (10, 10000),
 }
 
 
-def get_prediction(model_manager, r):
+def get_prediction(model_manager, r,task_id):
     start_time = time.time()
 
     if r is None or r.empty:
-        logger.error("DataFrame is empty or input data is None.")
+        logger.error(f"DataFrame is empty or input data is None {task_id}.")
         return None
 
     jeditaskid = r["JEDITASKID"].values[0]
@@ -175,7 +172,7 @@ if __name__ == "__main__":
             print(f"Received JEDITASKID: {task_id}")
             r = input_db.fetch_task_param(task_id)
             print(r)
-            result = get_prediction(model_manager, r)
+            result = get_prediction(model_manager, r,task_id)
             print(result)
 
             if isinstance(result, pd.DataFrame):
