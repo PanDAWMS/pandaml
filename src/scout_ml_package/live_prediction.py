@@ -38,6 +38,101 @@ def fetch_and_enqueue(listener, task_queue):
             logger.info(f"Task ID {task_id} added to queue")
 
 
+def get_prediction(model_manager, r, task_id):
+    start_time = time.time()
+
+    if r is None or r.empty:
+        logger.error(f"DataFrame is empty or input data is None {task_id}.")
+        return None
+
+    jeditaskid = r["JEDITASKID"].values[0]
+    processor = PredictionPipeline(model_manager)
+    base_df = processor.preprocess_data(r)
+
+    # Model 1: RAMCOUNT
+    features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
+    base_df.loc[:, "RAMCOUNT"] = processor.make_predictions_for_model(
+        "1", features, base_df
+    )
+
+    if not DataValidator.validate_prediction(
+        base_df, "RAMCOUNT", acceptable_ranges, jeditaskid
+    ):
+        logger.error(f"RAMCOUNT validation failed for JEDITASKID {jeditaskid}.")
+        return f"M1 failure."
+
+    # Update features for subsequent models
+    processor.numerical_features.append("RAMCOUNT")
+    features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
+
+    # Model 2/3: CTIME
+    try:
+        if base_df["CPUTIMEUNIT"].values[0] == "mHS06sPerEvent":
+            base_df.loc[:, "CTIME"] = processor.make_predictions_for_model(
+                "2", features, base_df
+            )
+        else:
+            base_df.loc[:, "CTIME"] = processor.make_predictions_for_model(
+                "3", features, base_df
+            )
+
+        if not DataValidator.validate_ctime_prediction(
+            base_df, jeditaskid, additional_ctime_ranges
+        ):
+            logger.error(f"CTIME validation failed for JEDITASKID {jeditaskid}.")
+            cpu_unit = base_df["CPUTIMEUNIT"].values[0]
+            if cpu_unit == "mHS06sPerEvent":
+                return f"M2 failure"
+            else:
+                return f"M3 failure"
+    except Exception as e:
+        logger.error(f"CTIME prediction failed for JEDITASKID {jeditaskid}: {str(e)}")
+        cpu_unit = base_df["CPUTIMEUNIT"].values[0]
+        if cpu_unit == "mHS06sPerEvent":
+            return f"{jeditaskid}M2 failure: {str(e)}"
+        else:
+            return f"{jeditaskid}M3 failure: {str(e)}"
+
+    # Update features for subsequent models
+    processor.numerical_features.append("CTIME")
+    features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
+
+    # Model 4: CPU_EFF
+    try:
+        base_df.loc[:, "CPU_EFF"] = processor.make_predictions_for_model(
+            "4", features, base_df
+        )
+        if not DataValidator.validate_prediction(
+            base_df, "CPU_EFF", acceptable_ranges, jeditaskid
+        ):
+            logger.error(f"CPU_EFF validation failed for JEDITASKID {jeditaskid}.")
+            return f"{jeditaskid}M4 failure: Validation failed."
+    except Exception as e:
+        logger.error(f"{jeditaskid} M4 failure: {str(e)}")
+        return f"M4 failure: {str(e)}"
+
+    # Update features for subsequent models
+    processor.numerical_features.append("CPU_EFF")
+    features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
+
+    # Model 5: IOINTENSITY
+    try:
+        base_df.loc[:, "IOINTENSITY"] = processor.make_predictions_for_model(
+            "5", features, base_df
+        )
+    except Exception as e:
+        logger.error(f"{jeditaskid}M5 failure: {str(e)}")
+        return f"M5 failure: {str(e)}"
+
+    logger.info(
+        f"JEDITASKID {jeditaskid} processed successfully in {time.time() - start_time:.2f} seconds"
+    )
+    base_df[["RAMCOUNT", "CTIME", "CPU_EFF"]] = base_df[
+        ["RAMCOUNT", "CTIME", "CPU_EFF"]
+    ].round(3)
+    return base_df
+
+
 def process_tasks(task_queue, input_db, output_db, model_manager, cols_to_write):
     """
     Processes tasks by fetching them from the queue, fetching task parameters,
