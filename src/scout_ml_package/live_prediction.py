@@ -24,7 +24,7 @@ acceptable_ranges = {
 
 additional_ctime_ranges = {
     "low": (0.1, 10),
-    "high": (400, 10000),
+    "high": (10, 10000),
 }
 
 
@@ -187,3 +187,4 @@ if __name__ == "__main__":
 
     print("All tasks processed")
     input_db.close_connection()
+    output_db.close_connection()
