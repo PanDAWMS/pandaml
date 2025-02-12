@@ -1,11 +1,13 @@
 import time
 import pandas as pd
 from datetime import datetime
+
 # from scout_ml_package.utils.logger import configure_logger
 from scout_ml_package.data.fetch_db_data import DatabaseFetcher
 from scout_ml_package.model.model_pipeline import ModelManager, PredictionPipeline
 from scout_ml_package.utils.logger import Logger
-from scout_ml_package.utils.validator import DataValidator, DummyData, FakeListener
+from scout_ml_package.utils.validator import DataValidator, DummyData
+from scout_ml_package.utils.message import TaskIDListener
 
 # logger = configure_logger('prediction_logger', '/data/model-data/logs/prediction_logger.log')
 # logger = configure_logger('demo_logger', '/data/model-data/logs', 'pred.log')
@@ -128,7 +130,7 @@ if __name__ == "__main__":
     base_path = "/data/model-data/"  # "/data/test/"
     model_manager = ModelManager(base_path)
     model_manager.load_models()
-    submission_date = datetime.now().strftime('%d-%b-%Y %I:%M:%S %p')
+    submission_date = datetime.now().strftime("%d-%b-%Y %I:%M:%S %p")
 
     # db_fetcher = DatabaseFetcher()
     input_db = DatabaseFetcher("database")
@@ -155,38 +157,97 @@ if __name__ == "__main__":
         27766704,
         30749131,
     ]  # [27766704, 27746332, 30749131, 30752901]
-    listener = FakeListener(sample_tasks, delay=6)  # Pass delay here
-    for jeditaskid in listener.demo_task_listener():  # No arguments needed here
-        print(f"Received JEDITASKID: {jeditaskid}")
-        r = input_db.fetch_task_param(jeditaskid)
-        # r = df[df['JEDITASKID'] == jeditaskid].copy()
-        print(r)
-        result = get_prediction(model_manager, r)
-        print(result)
 
-        if isinstance(result, pd.DataFrame):
-            # logger.info("Processing completed successfully")
-            print(result.columns)
-            result = result[cols_to_write].copy()
-            result['SUBMISSION_DATE'] = submission_date
-            output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
-        else:
-            logger.error(f"Processing failed: {result}")
+    # Replace FakeListener with TaskIDListener
+    listener = TaskIDListener(
+        mb_server_host_port=("aipanda100.cern.ch", 61613),
+        queue_name="/queue/new_task_notif",
+        vhost="/",
+        username="panda",
+        passcode="panda",
+    )
+    listener.start_listening()
+
+    # Use get_task_id method to retrieve task IDs
+    while True:
+        task_id = listener.get_task_id()
+        if task_id is not None:
+            print(f"Received JEDITASKID: {task_id}")
+            r = input_db.fetch_task_param(task_id)
             print(r)
-            error_df = r.copy()  # Copy the original DataFrame
-            error_df["ERROR"] = result  # Add the error message as a new column
+            result = get_prediction(model_manager, r)
+            print(result)
 
-            # Add dummy columns if necessary to match the schema of the main table
-            for col in cols_to_write:
-                if col not in error_df.columns:
-                    error_df[col] = None
-            error_df['SUBMISSION_DATE'] = submission_date
+            if isinstance(result, pd.DataFrame):
+                # logger.info("Processing completed successfully")
+                print(result.columns)
+                result = result[cols_to_write].copy()
+                result["SUBMISSION_DATE"] = submission_date
+                output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
 
-            output_db.write_data(
-                error_df[cols_to_write + ["ERROR", "SUBMISSION_DATE"]], "ATLAS_PANDA.PANDAMLTEST"
-            )
-        print("Next ID")
-        print(result)
+                message = {
+                    "taskid": 123456,
+                    "status": "success",
+                    "RAMCOUNT": result["RAMCOUNT"].values[0],
+                    "CTIME": result["CTIME"].values[0],
+                    "CPU_EFF": result["CPU_EFF"].values[0],
+                    "IOINTENSITY": result["IOINTENSITY"].values[0],
+                }
+                print(message)
+
+            else:
+                logger.error(f"Processing failed: {result}")
+                print(r)
+                error_df = r.copy()  # Copy the original DataFrame
+                error_df["ERROR"] = result  # Add the error message as a new column
+
+                # Add dummy columns if necessary to match the schema of the main table
+                for col in cols_to_write:
+                    if col not in error_df.columns:
+                        error_df[col] = None
+                error_df["SUBMISSION_DATE"] = submission_date
+
+                output_db.write_data(
+                    error_df[cols_to_write + ["ERROR", "SUBMISSION_DATE"]],
+                    "ATLAS_PANDA.PANDAMLTEST",
+                )
+            print("Next ID")
+            print(result)
+        else:
+            pass  # No task ID received in the last second
+
+    # listener = FakeListener(sample_tasks, delay=6)  # Pass delay here
+    # for jeditaskid in listener.demo_task_listener():  # No arguments needed here
+    #     print(f"Received JEDITASKID: {jeditaskid}")
+    #     r = input_db.fetch_task_param(jeditaskid)
+    #     # r = df[df['JEDITASKID'] == jeditaskid].copy()
+    #     print(r)
+    #     result = get_prediction(model_manager, r)
+    #     print(result)
+    #
+    #     if isinstance(result, pd.DataFrame):
+    #         # logger.info("Processing completed successfully")
+    #         print(result.columns)
+    #         result = result[cols_to_write].copy()
+    #         result['SUBMISSION_DATE'] = submission_date
+    #         output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
+    #     else:
+    #         logger.error(f"Processing failed: {result}")
+    #         print(r)
+    #         error_df = r.copy()  # Copy the original DataFrame
+    #         error_df["ERROR"] = result  # Add the error message as a new column
+    #
+    #         # Add dummy columns if necessary to match the schema of the main table
+    #         for col in cols_to_write:
+    #             if col not in error_df.columns:
+    #                 error_df[col] = None
+    #         error_df['SUBMISSION_DATE'] = submission_date
+    #
+    #         output_db.write_data(
+    #             error_df[cols_to_write + ["ERROR", "SUBMISSION_DATE"]], "ATLAS_PANDA.PANDAMLTEST"
+    #         )
+    #     print("Next ID")
+    #     print(result)
 
     print("All tasks processed")
     input_db.close_connection()
