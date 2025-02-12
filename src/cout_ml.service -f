@@ -1,0 +1,40 @@
+[0m[0;4m [0m[0m[0;4m UNIT                             [0m[0m[0;4m LOAD  [0m[0m[0;4m ACTIVE[0m[0m[0;4m SUB    [0m[0m[0;4m DESCRIPTION                                            [0m
+  auditd.service                    loaded active running Security Auditing Service
+  autofs.service                    loaded active running Automounts filesystems on demand
+  chronyd.service                   loaded active running NTP client/server
+  collectd.service                  loaded active running Collectd statistics daemon
+  containerd.service                loaded active running containerd container runtime
+  crond.service                     loaded active running Command Scheduler
+  dbus-broker.service               loaded active running D-Bus System Message Bus
+  docker.service                    loaded active running Docker Application Container Engine
+  fluent-bit@monit-agent.service    loaded active running Fluent Bit daemon
+  getty@tty1.service                loaded active running Getty on tty1
+  gssproxy.service                  loaded active running GSSAPI Proxy Daemon
+  irqbalance.service                loaded active running irqbalance daemon
+  mcollective.service               loaded active running The Marionette Collective
+  megabusclt.service                loaded active running megabusclt is a tool for a simple notification handling
+  NetworkManager.service            loaded active running Network Manager
+  node_exporter.service             loaded active running Prometheus node_exporter
+  openafs-client.service            loaded active running OpenAFS Client Service - CERN config
+  polkit.service                    loaded active running Authorization Manager
+  postfix.service                   loaded active running Postfix Mail Transport Agent
+  puppet.service                    loaded active running Puppet agent
+  rpc-gssd.service                  loaded active running RPC security service for NFS client and server
+  rpc-statd.service                 loaded active running NFS status monitor for NFSv2/3 locking.
+  rpcbind.service                   loaded active running RPC Bind
+  rsyslog.service                   loaded active running System Logging Service
+  serial-getty@ttyS0.service        loaded active running Serial Getty on ttyS0
+  sshd.service                      loaded active running OpenSSH server daemon
+  sssd.service                      loaded active running System Security Services Daemon
+  systemd-journald.service          loaded active running Journal Service
+  systemd-logind.service            loaded active running User Login Management
+  systemd-resolved.service          loaded active running Network Name Resolution
+  systemd-udevd.service             loaded active running Rule-based Manager for Device Events and Files
+  systemd_resolved_exporter.service loaded active running Prometheus systemd_resolved_exporter
+  tuned.service                     loaded active running Dynamic System Tuning Daemon
+  user@0.service                    loaded active running User Manager for UID 0
+
+LOAD   = Reflects whether the unit definition was properly loaded.
+ACTIVE = The high-level unit activation state, i.e. generalization of SUB.
+SUB    = The low-level unit activation state, values depend on unit type.
+34 loaded units listed.
