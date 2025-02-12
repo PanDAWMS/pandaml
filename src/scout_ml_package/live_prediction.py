@@ -142,16 +142,17 @@ def process_tasks(task_queue, input_db, output_db, model_manager, cols_to_write)
 
     while True:
         try:
-            task_id = task_queue.get(timeout=1)  # Wait up to 1 second for a task
+            logger.info("Fetching  task ID...")
+            # task_id = task_queue.get(timeout=1)  # Wait up to 1 second for a task
+            task_id = 43265094
             logger.info(f"Processing task ID: {task_id}")
 
             # Fetch task parameters
             r = input_db.fetch_task_param(task_id)
-            if isinstance(r, pd.DataFrame) and not r.empty:
+            if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
                 logger.info(
                     f"Task parameters fetched successfully for JEDITASKID: {task_id}"
                 )
-
                 # Generate prediction
                 try:
                     result = get_prediction(model_manager, r, task_id)
