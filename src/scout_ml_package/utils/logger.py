@@ -1,6 +1,7 @@
 import logging
 import os
 
+
 class Logger:
     _instance = None
 
@@ -100,11 +101,11 @@ class Logger:
     def critical(self, message):
         self.logger.critical(message)
 
-# Example usage
-#logger = Logger('demo_logger', '/data/model-data/logs', 'pred.log')
-#logger.get_logger().debug("This is a debug message.")
-#logger.get_logger().info("This is an info message.")
-#logger.get_logger().warning("This is a warning message.")
-#logger.get_logger().error("This is an error message.")
-#logger.get_logger().critical("This is a critical message.")
 
+# Example usage
+# logger = Logger('demo_logger', '/data/model-data/logs', 'pred.log')
+# logger.get_logger().debug("This is a debug message.")
+# logger.get_logger().info("This is an info message.")
+# logger.get_logger().warning("This is a warning message.")
+# logger.get_logger().error("This is an error message.")
+# logger.get_logger().critical("This is a critical message.")

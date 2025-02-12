@@ -3,15 +3,22 @@ import json
 import stomp
 import queue
 import threading
+import configparser
 
 
 class TaskIDListener:
-    def __init__(self, mb_server_host_port, queue_name, vhost, username, passcode):
-        self.mb_server_host_port = mb_server_host_port
-        self.queue_name = queue_name
-        self.vhost = vhost
-        self.username = username
-        self.passcode = passcode
+    def __init__(self, config_file="config.ini"):
+        # Load configuration from config.ini
+        config = configparser.ConfigParser()
+        config.read(config_file)
+
+        # Extract credentials and other settings
+        self.mb_server_host_port = (config["LPORT"]["host"], int(config["LPORT"]["port"]))
+        self.queue_name = config["LPORT"]["queue_name"]
+        self.vhost = config["LPORT"]["vhost"]
+        self.username = config["credentials"]["username"]
+        self.passcode = config["credentials"]["passcode"]
+
         self.listener_lifetime_sec = 900  # Default lifetime
         self.task_id_queue = queue.Queue()
 
