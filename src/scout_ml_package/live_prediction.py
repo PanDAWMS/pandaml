@@ -155,7 +155,7 @@ if __name__ == "__main__":
         27766704,
         30749131,
     ]  # [27766704, 27746332, 30749131, 30752901]
-    listener = FakeListener(sample_tasks, delay=6)  # Pass delay here
+    listener = FakeListener(sample_tasks, delay=200)  # Pass delay here
     for jeditaskid in listener.demo_task_listener():  # No arguments needed here
         print(f"Received JEDITASKID: {jeditaskid}")
         r = input_db.fetch_task_param(jeditaskid)
