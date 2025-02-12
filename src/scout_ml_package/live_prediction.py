@@ -180,14 +180,8 @@ if __name__ == "__main__":
         "CPU_EFF",
         "IOINTENSITY",
     ]
-    listener = TaskIDListener(
-        mb_server_host_port=("aipanda100.cern.ch", 61613),
-        queue_name="/queue/new_task_notif",
-        vhost="/",
-        username="panda",
-        passcode="panda",
-    )
-    listener.start_listening()
+
+    listener = TaskIDListener(config_file="/data/model-data/configs/config.ini")
 
     task_queue = queue.Queue()
 
