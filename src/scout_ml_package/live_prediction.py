@@ -29,17 +29,6 @@ additional_ctime_ranges = {
 }
 
 
-def fetch_and_enqueue(listener, task_queue):
-    """
-    Fetches task IDs and adds them to the queue.
-    """
-    while True:
-        task_id = listener.get_task_id()
-        if task_id is not None:
-            task_queue.put(task_id)
-            logger.info(f"Task ID {task_id} added to queue")
-
-
 def get_prediction(model_manager, r, task_id):
     start_time = time.time()
 
@@ -135,13 +124,6 @@ def get_prediction(model_manager, r, task_id):
     return base_df
 
 
-def get_task_id(self):
-    try:
-        return self.task_id_queue.get(timeout=1)
-    except queue.Empty:
-        return None
-
-
 def fetch_and_enqueue(listener, task_queue):
     global last_logged
     while True:
@@ -156,19 +138,6 @@ def fetch_and_enqueue(listener, task_queue):
                 if current_time - last_logged >= 120:  # Check if 60 seconds have passed
                     logger.info("No task ID received.")
                     last_logged = current_time  # Update last logged time
-        except Exception as e:
-            logger.error(f"Error fetching task ID: {e}")
-
-
-def fetch_and_enqueue1(listener, task_queue):
-    while True:
-        try:
-            task_id = listener.get_task_id()
-            if task_id is not None:
-                task_queue.put(task_id)
-                logger.info(f"Added task ID {task_id} to queue")
-            else:
-                logger.info("No task ID received.")
         except Exception as e:
             logger.error(f"Error fetching task ID: {e}")
 
@@ -306,11 +275,12 @@ if __name__ == "__main__":
     ]
 
     listener = TaskIDListener(config_file="/data/model-data/configs/config.ini")
-    listener.start_listening()
+    # listener.start_listening()
 
     task_queue = queue.Queue()
 
     # Start a thread to fetch and enqueue task IDs
+    threading.Thread(target=self.listen_for_tasks).start()
     fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(listener, task_queue))
     fetch_thread.daemon = (
         True  # Allow the main thread to exit even if this thread is still running

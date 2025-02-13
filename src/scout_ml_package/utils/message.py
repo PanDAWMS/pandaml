@@ -48,7 +48,12 @@ class TaskIDListener:
     def read_id(self, msg_json):
         try:
             msg = json.loads(msg_json)
-            if msg["msg_type"] == "task_status" and msg["status"] == "defined":
+            now_ts = time.time()
+            if (
+                msg["msg_type"] == "task_status"
+                and msg["status"] == "defined"
+                and now_ts - msg["timestamp"] <= 600
+            ):
                 task_id = msg["taskid"]
                 print(f"got task {task_id}")
                 self.task_id_queue.put(task_id)
