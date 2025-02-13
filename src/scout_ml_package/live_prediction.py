@@ -275,12 +275,12 @@ if __name__ == "__main__":
     ]
 
     listener = TaskIDListener(config_file="/data/model-data/configs/config.ini")
-    # listener.start_listening()
+    listener.start_listening()
 
     task_queue = queue.Queue()
 
     # Start a thread to fetch and enqueue task IDs
-    threading.Thread(target=self.listen_for_tasks).start()
+    #threading.Thread(target=self.listen_for_tasks).start()
     fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(listener, task_queue))
     fetch_thread.daemon = (
         True  # Allow the main thread to exit even if this thread is still running
