@@ -1,30 +1,16 @@
 import pandas as pd
 from datetime import datetime
-import queue
-import threading
 import sys
-import time
 import queue
 import threading
-import time
-import json
-import stomp
-import queue
-import threading
-import configparser
-import oracledb
 from oracledb import Error
-# from scout_ml_package.utils.logger import configure_logger
-from scout_ml_package.data.fetch_db_data import DatabaseFetcher
-from scout_ml_package.model.model_pipeline import ModelManager
-from scout_ml_package.utils.logger import Logger
-from scout_ml_package.utils.message import TaskIDListener
+import time
 
-# from scout_ml_package.utils.logger import configure_logger
+last_logged = time.time()
 from scout_ml_package.data.fetch_db_data import DatabaseFetcher
 from scout_ml_package.model.model_pipeline import ModelManager, PredictionPipeline
 from scout_ml_package.utils.logger import Logger
-from scout_ml_package.utils.validator import DataValidator, DummyData
+from scout_ml_package.utils.validator import DataValidator
 from scout_ml_package.utils.message import TaskIDListener
 
 # logger = Logger("demo_logger", "/data/model-data/logs", "pred.log").get_logger()
@@ -148,15 +134,13 @@ def get_prediction(model_manager, r, task_id):
     ].round(3)
     return base_df
 
+
 def get_task_id(self):
     try:
         return self.task_id_queue.get(timeout=1)
     except queue.Empty:
         return None
 
-import time
-
-last_logged = time.time()
 
 def fetch_and_enqueue(listener, task_queue):
     global last_logged
@@ -175,6 +159,7 @@ def fetch_and_enqueue(listener, task_queue):
         except Exception as e:
             logger.error(f"Error fetching task ID: {e}")
 
+
 def fetch_and_enqueue1(listener, task_queue):
     while True:
         try:
@@ -186,101 +171,6 @@ def fetch_and_enqueue1(listener, task_queue):
                 logger.info("No task ID received.")
         except Exception as e:
             logger.error(f"Error fetching task ID: {e}")
-
-def process_tasks(task_queue, input_db, output_db, model_manager, cols_to_write):
-    """
-    Processes tasks by fetching them from the queue, fetching task parameters,
-    and handling predictions or errors appropriately.
-    """
-    submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    while True:
-        try:
-            logger.info("Fetching  task ID...")
-            #task_id = task_queue.get(timeout=1)  # Wait up to 1 second for a task
-            task_id = task_queue.get()
-            #task_id = 43265094
-            logger.info(f"Processing task ID: {task_id}")
-
-            # Fetch task parameters
-            r = input_db.fetch_task_param(task_id)
-            if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
-                logger.info(
-                    f"Task parameters fetched successfully for JEDITASKID: {task_id}"
-                )
-                # Generate prediction
-                try:
-                    result = get_prediction(model_manager, r, task_id)
-                    if isinstance(result, pd.DataFrame):
-                        logger.info(
-                            f"Prediction completed successfully for JEDITASKID: {task_id}"
-                        )
-
-                        # Process and write results to the output database
-                        result = result[cols_to_write].copy()
-                        result["SUBMISSION_DATE"] = submission_date
-                        output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
-
-                        # Prepare success message
-                        message = {
-                            "taskid": result["JEDITASKID"].values[0],
-                            "status": "success",
-                            "RAMCOUNT": result["RAMCOUNT"].values[0],
-                            "CTIME": result["CTIME"].values[0],
-                            "CPU_EFF": result["CPU_EFF"].values[0],
-                            "IOINTENSITY": result["IOINTENSITY"].values[0],
-                        }
-                        logger.info(f"Success message: {message}")
-
-                    else:
-                        # Handle non-DataFrame results as an error
-                        raise ValueError(
-                            f"Prediction failed for JEDITASKID: {task_id}. Result: {result}"
-                        )
-
-                except oracledb.exceptions.InterfaceError as e:
-                    if "DPY-1001" in str(e):
-                        logger.error(
-                            f"Database connection error: {e}. Exiting to trigger service restart."
-                        )
-                        sys.exit(1)  # Exit with a non-zero status to trigger restart
-                    else:
-                        logger.error(
-                            f"Oracle interface error for JEDITASKID: {task_id}: {e}"
-                        )
-                        handle_error(
-                            task_id, r, str(e), cols_to_write, submission_date, output_db
-                        )
-
-                except Exception as e:
-                    logger.error(
-                        f"Error during prediction for JEDITASKID: {task_id}: {e}"
-                    )
-                    handle_error(
-                        task_id, r, str(e), cols_to_write, submission_date, output_db
-                    )
-
-            else:
-                # Handle invalid or empty DataFrame `r`
-                error_message = (
-                    f"Invalid or empty DataFrame fetched for JEDITASKID: {task_id}"
-                )
-                logger.error(error_message)
-                handle_error(
-                    task_id,
-                    r if isinstance(r, pd.DataFrame) else None,
-                    error_message,
-                    cols_to_write,
-                    submission_date,
-                    output_db,
-                )
-
-            task_queue.task_done()  # Mark the task as done
-
-        except queue.Empty:
-
-            logger.info("Task queue is empty. Waiting for new tasks...")
-            time.sleep(60)  # Wait for 1 minute before checking again
 
 
 def handle_error(task_id, r, error_message, cols_to_write, submission_date, output_db):
@@ -307,22 +197,21 @@ def handle_error(task_id, r, error_message, cols_to_write, submission_date, outp
     except Exception as e:
         logger.exception(f"Failed to handle error for JEDITASKID: {task_id}: {e}")
 
+
 def process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write):
     """
     Processes a single task by fetching its parameters, generating predictions,
     and handling errors appropriately.
     """
-    #submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+    # submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    submission_date = datetime.now()
     try:
         logger.info(f"Processing task ID: {task_id}")
 
         # Fetch task parameters
         r = input_db.fetch_task_param(task_id)
         if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
-            logger.info(
-                f"Task parameters fetched successfully for JEDITASKID: {task_id}"
-            )
+            logger.info(f"Task parameters fetched successfully for JEDITASKID: {task_id}")
             # Generate prediction
             try:
                 result = get_prediction(model_manager, r, task_id)
@@ -334,7 +223,7 @@ def process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write):
                     # Process and write results to the output database
                     result = result[cols_to_write].copy()
                     result["SUBMISSION_DATE"] = datetime.now()
-                    #result["SUBMISSION_DATE"] = result["SUBMISSION_DATE"].dt.strftime('%Y-%m-%d %H:%M:%S')
+                    # result["SUBMISSION_DATE"] = result["SUBMISSION_DATE"].dt.strftime('%Y-%m-%d %H:%M:%S')
                     output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
 
                     # Prepare success message
@@ -355,24 +244,20 @@ def process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write):
                     )
 
             except Error as e:
-                error_obj, = e.args
+                (error_obj,) = e.args
                 if "DPY-1001" in error_obj.message:
                     logger.error(
                         f"Database connection error: {e}. Exiting to trigger service restart."
                     )
                     sys.exit(1)  # Exit with a non-zero status to trigger restart
                 else:
-                    logger.error(
-                        f"Oracle interface error for JEDITASKID: {task_id}: {e}"
-                    )
+                    logger.error(f"Oracle interface error for JEDITASKID: {task_id}: {e}")
                     handle_error(
                         task_id, r, str(e), cols_to_write, submission_date, output_db
                     )
 
             except Exception as e:
-                logger.error(
-                    f"Error during prediction for JEDITASKID: {task_id}: {e}"
-                )
+                logger.error(f"Error during prediction for JEDITASKID: {task_id}: {e}")
                 handle_error(
                     task_id, r, str(e), cols_to_write, submission_date, output_db
                 )
@@ -393,108 +278,6 @@ def process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write):
 
     except Exception as e:
         logger.error(f"Error processing task ID: {e}")
-
-
-def process_task_v3(task_id, input_db, output_db, model_manager, cols_to_write):
-    """
-    Processes a single task by fetching its parameters, generating predictions,
-    and handling errors appropriately.
-    """
-    submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    try:
-        logger.info(f"Processing task ID: {task_id}")
-
-        # Fetch task parameters
-        r = input_db.fetch_task_param(task_id)
-        logger.info(f"{r.head(2)}")
-        if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
-            logger.info(
-                f"Task parameters fetched successfully for JEDITASKID: {task_id}"
-            )
-            # Generate prediction
-            try:
-                result = get_prediction(model_manager, r, task_id)
-                if isinstance(result, pd.DataFrame):
-                    logger.info(
-                        f"Prediction completed successfully for JEDITASKID: {task_id}"
-                    )
-
-                    # Process and write results to the output database
-                    result = result[cols_to_write].copy()
-                    result["SUBMISSION_DATE"] = submission_date
-                    output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
-
-                    # Prepare success message
-                    message = {
-                        "taskid": result["JEDITASKID"].values[0],
-                        "status": "success",
-                        "RAMCOUNT": result["RAMCOUNT"].values[0],
-                        "CTIME": result["CTIME"].values[0],
-                        "CPU_EFF": result["CPU_EFF"].values[0],
-                        "IOINTENSITY": result["IOINTENSITY"].values[0],
-                    }
-                    logger.info(f"Success message: {message}")
-
-                else:
-                    # Handle non-DataFrame results as an error
-                    raise ValueError(
-                        f"Prediction failed for JEDITASKID: {task_id}. Result: {result}"
-                    )
-
-            except Error as e:
-                error_obj, = e.args
-                if "DPY-1001" in str(e):
-                    logger.error(
-                        f"Database connection error: {e}. Exiting to trigger service restart."
-                    )
-                    sys.exit(1)  # Exit with a non-zero status to trigger restart
-                else:
-                    logger.error(
-                        f"Oracle interface error for JEDITASKID: {task_id}: {e}"
-                    )
-                    handle_error(
-                        task_id, r, str(e), cols_to_write, submission_date, output_db
-                    )
-
-            except Exception as e:
-                logger.error(
-                    f"Error during prediction for JEDITASKID: {task_id}: {e}"
-                )
-                handle_error(
-                    task_id, r, str(e), cols_to_write, submission_date, output_db
-                )
-
-        else:
-            # Handle invalid or empty DataFrame `r`
-            error_message = (
-                f"Invalid or empty DataFrame fetched for JEDITASKID: {task_id}"
-            )
-            logger.error(error_message)
-            handle_error(
-                task_id,
-                r if isinstance(r, pd.DataFrame) else None,
-                error_message,
-                cols_to_write,
-                submission_date,
-                output_db,
-            )
-
-    except Exception as e:
-        logger.error(f"Error processing task ID: {e}")
-
-def process_tasks_v2(input_db, output_db, model_manager, cols_to_write, task_queue):
-    """
-    Processes tasks from the queue by calling process_task_v1 for each task ID.
-    """
-    while True:
-        try:
-            task_id = task_queue.get()
-            process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write)
-            task_queue.task_done()  # Mark the task as done
-        except Exception as e:
-            logger.error(f"Error processing task queue: {e}")
-
 
 
 # Example usage (replace with actual implementations)
@@ -529,7 +312,9 @@ if __name__ == "__main__":
 
     # Start a thread to fetch and enqueue task IDs
     fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(listener, task_queue))
-    fetch_thread.daemon = True  # Allow the main thread to exit even if this thread is still running
+    fetch_thread.daemon = (
+        True  # Allow the main thread to exit even if this thread is still running
+    )
     fetch_thread.start()
 
     while True:
@@ -539,25 +324,15 @@ if __name__ == "__main__":
                 logger.info(f"Processing task ID: {task_id}")
                 print(f"Received JEDITASKID: {task_id}")
                 logger.info("Calling process_task_v1...")
-                process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write)
+                process_task_v1(
+                    task_id, input_db, output_db, model_manager, cols_to_write
+                )
                 logger.info("Finished processing task ID.")
             else:
                 logger.info("Task queue is empty. Sleeping for 60 seconds...")
                 time.sleep(60)
         except Exception as e:
             logger.error(f"Error processing task ID: {e}")
-    
-
-
-    # Start a thread to fetch and enqueue task IDs
-    #fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(listener, task_queue))
-    #fetch_thread.daemon = (
-        True  # Allow the main thread to exit even if this thread is still running
-    #)
-    #fetch_thread.start()
-
-    # Start processing tasks
-    #process_tasks(task_queue, input_db, output_db, model_manager, cols_to_write)
 
     print("All tasks processed")
     input_db.close_connection()
