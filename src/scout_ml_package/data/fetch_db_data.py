@@ -101,7 +101,60 @@ class DatabaseFetcher:
         df = pd.read_sql(query, con=self.conn)
         return df
 
-    def write_data(self, data, table_name):
+    def write_data(self, data, table_name, max_retries=3):
+        """
+        Write a pandas DataFrame to an Oracle database table with retry mechanism.
+
+        Args:
+            data (pd.DataFrame): The DataFrame containing data to be inserted.
+            table_name (str): The name of the target database table.
+            max_retries (int): Maximum number of retries if connection fails.
+        """
+        retries = 0
+        while retries <= max_retries:
+            self.reconnect_if_needed()
+
+            if not self.conn:
+                retries += 1
+                if retries > max_retries:
+                    raise Exception(f"Failed to connect to the database after {max_retries} retries.")
+                else:
+                    print(f"Connection not active. Retrying in 1 second...")
+                    time.sleep(1)  # Wait before retrying
+                    continue
+
+            try:
+                # Create a cursor
+                cursor = self.conn.cursor()
+
+                # Generate SQL placeholders for insertion
+                columns = ", ".join(data.columns)
+                placeholders = ", ".join([":" + str(i + 1) for i in range(len(data.columns))])
+                sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+
+                # Convert DataFrame rows to a list of tuples
+                rows = [tuple(row) for row in data.itertuples(index=False)]
+
+                # Execute batch insertion
+                cursor.executemany(sql, rows)
+                self.conn.commit()
+
+                print(f"Data successfully written to {table_name}")
+                break
+            except Exception as e:
+                print(f"Failed to write data to {table_name}: {e}")
+                self.conn.rollback()  # Rollback in case of error
+                retries += 1
+                if retries > max_retries:
+                    raise Exception(f"Failed to write data after {max_retries} retries.")
+                else:
+                    print(f"Retrying in 1 second...")
+                    time.sleep(1)  # Wait before retrying
+            finally:
+                if "cursor" in locals():
+                    cursor.close()
+
+    def write_data0(self, data, table_name):
         """
         Write a pandas DataFrame to an Oracle database table.
 
@@ -147,3 +200,4 @@ class DatabaseFetcher:
             self.conn = None
         else:
             print("No active database connection to close.")
+

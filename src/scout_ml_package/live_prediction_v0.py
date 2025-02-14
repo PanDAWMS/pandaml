@@ -11,7 +11,7 @@ from scout_ml_package.data.fetch_db_data import DatabaseFetcher
 from scout_ml_package.model.model_pipeline import ModelManager, PredictionPipeline
 from scout_ml_package.utils.logger import Logger
 from scout_ml_package.utils.validator import DataValidator
-from scout_ml_package.utils.message import ConfigLoader, MyListener #TaskIDListener
+from scout_ml_package.utils.message import TaskIDListener
 
 # logger = Logger("demo_logger", "/data/model-data/logs", "pred.log").get_logger()
 logger = Logger("demo_logger", "/data/model-data/logs", "demo.log")
@@ -27,21 +27,6 @@ additional_ctime_ranges = {
     "low": (0.1, 10),
     "high": (10, 10000),
 }
-
-
-def fetch_and_enqueue(task_id_queue, task_queue):
-    while True:
-        try:
-            task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
-            if task_id is not None:
-                task_queue.put(task_id)
-                logger.info(f"Added task ID {task_id} to queue")
-            else:
-                logger.info("No task ID received.")
-        except queue.Empty:
-            pass
-        except Exception as e:
-            logger.error(f"Error fetching task ID: {e}")
 
 
 def get_prediction(model_manager, r, task_id):
@@ -139,6 +124,22 @@ def get_prediction(model_manager, r, task_id):
     return base_df
 
 
+def fetch_and_enqueue(listener, task_queue):
+    global last_logged
+    while True:
+        try:
+            task_id = listener.get_task_id()
+            if task_id is not None:
+                task_queue.put(task_id)
+                logger.info(f"Added task ID {task_id} to queue")
+                last_logged = time.time()  # Reset timer when a task ID is received
+            else:
+                current_time = time.time()
+                if current_time - last_logged >= 120:  # Check if 60 seconds have passed
+                    logger.info("No task ID received.")
+                    last_logged = current_time  # Update last logged time
+        except Exception as e:
+            logger.error(f"Error fetching task ID: {e}")
 
 
 def handle_error(task_id, r, error_message, cols_to_write, submission_date, output_db):
@@ -248,20 +249,6 @@ def process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write):
         logger.error(f"Error processing task ID: {e}")
 
 
-def process_tasks(task_queue):
-    while True:
-        try:
-            if not task_queue.empty():
-                task_id = task_queue.get()
-                process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write)
-                remaining_tasks = task_queue.qsize()
-                print(f"Saved result for task {task_id}. Remaining tasks in queue: {remaining_tasks}")
-            else:
-                # Check frequently for new task IDs
-                time.sleep(0.1)  # Check every 100 ms
-        except Exception as e:
-            logger.error(f"Error processing task ID: {e}")
-
 # Example usage (replace with actual implementations)
 if __name__ == "__main__":
     base_path = "/data/model-data/"  # "/data/test/"
@@ -287,38 +274,36 @@ if __name__ == "__main__":
         "IOINTENSITY",
     ]
 
-    # Load configuration
-    config_path = "/data/model-data/configs/config.ini"  # Replace with your config file path
-    config_loader = ConfigLoader(config_path)
-    # Create queues to hold task IDs
-    task_id_queue = queue.Queue()
+    listener = TaskIDListener(config_file="/data/model-data/configs/config.ini")
+    listener.start_listening()
+
     task_queue = queue.Queue()
 
-    # Create and start listener
-    listener = MyListener(
-        task_id_queue,
-        config_loader.mb_server_host_port,
-        config_loader.vhost,
-        config_loader.username,
-        config_loader.passcode,
-        config_loader.queue_name
+    # Start a thread to fetch and enqueue task IDs
+    #threading.Thread(target=self.listen_for_tasks).start()
+    fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(listener, task_queue))
+    fetch_thread.daemon = (
+        True  # Allow the main thread to exit even if this thread is still running
     )
-
-    # Start threads
-    fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(task_id_queue, task_queue))
-    fetch_thread.daemon = True
     fetch_thread.start()
 
-    process_thread = threading.Thread(target=process_tasks, args=(task_queue,))
-    process_thread.daemon = True
-    process_thread.start()
-
-    # Keep the main thread running
     while True:
-        time.sleep(1)
-
+        try:
+            if not task_queue.empty():
+                task_id = task_queue.get()
+                logger.info(f"Processing task ID: {task_id}")
+                print(f"Received JEDITASKID: {task_id}")
+                logger.info("Calling process_task_v1...")
+                process_task_v1(
+                    task_id, input_db, output_db, model_manager, cols_to_write
+                )
+                logger.info("Finished processing task ID.")
+            else:
+                logger.info("Task queue is empty. Sleeping for 60 seconds...")
+                time.sleep(60)
+        except Exception as e:
+            logger.error(f"Error processing task ID: {e}")
 
     print("All tasks processed")
     input_db.close_connection()
     output_db.close_connection()
-
