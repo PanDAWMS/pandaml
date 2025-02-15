@@ -5,6 +5,8 @@ import queue
 import threading
 from oracledb import Error
 import time
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='pandas.io.sql')
 
 last_logged = time.time()
 from scout_ml_package.data.fetch_db_data import DatabaseFetcher
@@ -202,11 +204,18 @@ def process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write):
                         "CTIME": result["CTIME"].values[0],
                         "CPU_EFF": result["CPU_EFF"].values[0],
                         "IOINTENSITY": result["IOINTENSITY"].values[0],
+                        "submission_time": submission_date,
                     }
                     logger.info(f"Success message: {message}")
 
                 else:
                     # Handle non-DataFrame results as an error
+                    message = {
+                        "taskid": result["JEDITASKID"].values[0],
+                        "status": "failure",
+                        "submission_time": submission_date,
+                    }
+                    logger.info(f"Failure message: {message}")
                     raise ValueError(
                         f"Prediction failed for JEDITASKID: {task_id}. Result: {result}"
                     )

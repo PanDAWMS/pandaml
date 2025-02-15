@@ -55,7 +55,7 @@ class MyListener(stomp.ConnectionListener):
         try:
             msg = json.loads(frame.body)
             now_ts = time.time()
-            if msg['msg_type'] == 'task_status' and msg['status'] == 'defined' and now_ts - msg['timestamp'] >5 : #and now_ts - msg['timestamp'] <= 600
+            if msg['msg_type'] == 'task_status' and msg['status'] == 'defined' and now_ts - msg['timestamp'] <= 600:
                 task_id = msg["taskid"]
                 logging.info(f"Received task ID: {task_id}")
                 self.task_id_queue.put(task_id)

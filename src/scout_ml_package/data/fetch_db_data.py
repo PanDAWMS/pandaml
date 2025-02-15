@@ -5,6 +5,9 @@ import os
 
 import oracledb
 import pandas as pd
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='pandas.io.sql')
+
 
 oracledb.init_oracle_client(
     config_dir="/data/model-data/configs",
@@ -76,7 +79,7 @@ class DatabaseFetcher:
 
         # Combined SQL query
         query = f"""
-        SELECT
+        SELECT 
             jt.jeditaskid,
             jt.prodsourcelabel,
             jt.processingtype,
@@ -86,18 +89,16 @@ class DatabaseFetcher:
             jt.corecount,
             SUM(jd.NFILES) AS total_nfiles,
             SUM(jd.NEVENTS) AS total_nevents,
-            COUNT(DISTINCT jd.DATASETNAME) AS distinct_datasetname_count
+            COUNT(jd.DATASETNAME) AS distinct_datasetname_count
         FROM
             atlas_panda.jedi_tasks jt
         LEFT JOIN
-            atlas_panda.jedi_datasets jd ON jt.jeditaskid = jd.jeditaskid AND jd.TYPE = 'input'
-        WHERE
-            jt.jeditaskid IN ({jeditaskid_str}) AND jd.type = 'input'
-        GROUP BY
-            jt.jeditaskid, jt.prodsourcelabel, jt.processingtype, jt.transhome, jt.transpath, jt.cputimeunit, jt.corecount
+            atlas_panda.jedi_datasets jd ON jt.jeditaskid = jd.jeditaskid 
+        WHERE 
+            jt.jeditaskid IN ({jeditaskid_str})  and (jd.type = 'input' or jd.type = 'pseudo_input')
+        GROUP BY 
+            jt.jeditaskid, jt.prodsourcelabel, jt.processingtype, jt.transhome, jt.transpath, jt.cputimeunit, jt.taskname, jt.corecount
         """
-
-        # Execute the combined query and return the resulting DataFrame
         df = pd.read_sql(query, con=self.conn)
         return df
 
