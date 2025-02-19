@@ -167,7 +167,7 @@ def handle_error(task_id, r, error_message, cols_to_write, submission_date, outp
         logger.exception(f"Failed to handle error for JEDITASKID: {task_id}: {e}")
 
 
-def process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write):
+def process_single_task(task_id, input_db, output_db, model_manager, cols_to_write):
     """
     Processes a single task by fetching its parameters, generating predictions,
     and handling errors appropriately.
@@ -261,7 +261,7 @@ def process_tasks(task_queue):
         try:
             if not task_queue.empty():
                 task_id = task_queue.get()
-                process_task_v1(
+                process_single_task(
                     task_id, input_db, output_db, model_manager, cols_to_write
                 )
                 remaining_tasks = task_queue.qsize()
