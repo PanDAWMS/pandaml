@@ -375,7 +375,7 @@ class PredictionPipeline:
             ["HS06sPerEvent", "mHS06sPerEvent"],
         ]
 
-    def preprocess_data(self, df):
+    def transform_features(self, df):
         # Convert PROCESSINGTYPE to 'P'
         def convert_processingtype(processingtype):
             if processingtype is not None and re.search(r"-.*-", processingtype):
@@ -435,7 +435,7 @@ class PredictionPipeline:
             if mh is None:
                 raise ValueError(f"Model with sequence {model_sequence} not found")
 
-            processed_data, features_to_train = mh.preprocess_data(
+            processed_data, features_to_train = mh.transform_features(
                 input_df[features],
                 self.numerical_features,
                 self.category_sequence,

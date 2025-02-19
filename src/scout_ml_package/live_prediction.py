@@ -6,14 +6,15 @@ import threading
 from oracledb import Error
 import time
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module='pandas.io.sql')
+
+warnings.filterwarnings("ignore", category=UserWarning, module="pandas.io.sql")
 
 last_logged = time.time()
 from scout_ml_package.data.fetch_db_data import DatabaseFetcher
 from scout_ml_package.model.model_pipeline import ModelManager, PredictionPipeline
 from scout_ml_package.utils.logger import Logger
 from scout_ml_package.utils.validator import DataValidator
-from scout_ml_package.utils.message import ConfigLoader, MyListener #TaskIDListener
+from scout_ml_package.utils.message import ConfigLoader, MyListener  # TaskIDListener
 
 # logger = Logger("demo_logger", "/data/model-data/logs", "pred.log").get_logger()
 logger = Logger("demo_logger", "/data/model-data/logs", "demo.log")
@@ -55,7 +56,7 @@ def get_prediction(model_manager, r, task_id):
 
     jeditaskid = r["JEDITASKID"].values[0]
     processor = PredictionPipeline(model_manager)
-    base_df = processor.preprocess_data(r)
+    base_df = processor.transform_features(r)
 
     # Model 1: RAMCOUNT
     features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
@@ -139,8 +140,6 @@ def get_prediction(model_manager, r, task_id):
         ["RAMCOUNT", "CTIME", "CPU_EFF"]
     ].round(3)
     return base_df
-
-
 
 
 def handle_error(task_id, r, error_message, cols_to_write, submission_date, output_db):
@@ -262,14 +261,19 @@ def process_tasks(task_queue):
         try:
             if not task_queue.empty():
                 task_id = task_queue.get()
-                process_task_v1(task_id, input_db, output_db, model_manager, cols_to_write)
+                process_task_v1(
+                    task_id, input_db, output_db, model_manager, cols_to_write
+                )
                 remaining_tasks = task_queue.qsize()
-                print(f"Saved result for task {task_id}. Remaining tasks in queue: {remaining_tasks}")
+                print(
+                    f"Saved result for task {task_id}. Remaining tasks in queue: {remaining_tasks}"
+                )
             else:
                 # Check frequently for new task IDs
                 time.sleep(0.1)  # Check every 100 ms
         except Exception as e:
             logger.error(f"Error processing task ID: {e}")
+
 
 # Example usage (replace with actual implementations)
 if __name__ == "__main__":
@@ -297,7 +301,9 @@ if __name__ == "__main__":
     ]
 
     # Load configuration
-    config_path = "/data/model-data/configs/config.ini"  # Replace with your config file path
+    config_path = (
+        "/data/model-data/configs/config.ini"  # Replace with your config file path
+    )
     config_loader = ConfigLoader(config_path)
     # Create queues to hold task IDs
     task_id_queue = queue.Queue()
@@ -310,11 +316,13 @@ if __name__ == "__main__":
         config_loader.vhost,
         config_loader.username,
         config_loader.passcode,
-        config_loader.queue_name
+        config_loader.queue_name,
     )
 
     # Start threads
-    fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(task_id_queue, task_queue))
+    fetch_thread = threading.Thread(
+        target=fetch_and_enqueue, args=(task_id_queue, task_queue)
+    )
     fetch_thread.daemon = True
     fetch_thread.start()
 
@@ -326,8 +334,6 @@ if __name__ == "__main__":
     while True:
         time.sleep(1)
 
-
     print("All tasks processed")
     input_db.close_connection()
     output_db.close_connection()
-

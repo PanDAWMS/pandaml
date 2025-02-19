@@ -38,7 +38,7 @@ def get_prediction(model_manager, r, task_id):
 
     jeditaskid = r["JEDITASKID"].values[0]
     processor = PredictionPipeline(model_manager)
-    base_df = processor.preprocess_data(r)
+    base_df = processor.transform_features(r)
 
     # Model 1: RAMCOUNT
     features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     task_queue = queue.Queue()
 
     # Start a thread to fetch and enqueue task IDs
-    #threading.Thread(target=self.listen_for_tasks).start()
+    # threading.Thread(target=self.listen_for_tasks).start()
     fetch_thread = threading.Thread(target=fetch_and_enqueue, args=(listener, task_queue))
     fetch_thread.daemon = (
         True  # Allow the main thread to exit even if this thread is still running

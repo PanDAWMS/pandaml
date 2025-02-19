@@ -6,7 +6,8 @@ import os
 import oracledb
 import pandas as pd
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module='pandas.io.sql')
+
+warnings.filterwarnings("ignore", category=UserWarning, module="pandas.io.sql")
 
 
 oracledb.init_oracle_client(
@@ -79,7 +80,7 @@ class DatabaseFetcher:
 
         # Combined SQL query
         query = f"""
-        SELECT 
+        SELECT
             jt.jeditaskid,
             jt.prodsourcelabel,
             jt.processingtype,
@@ -93,10 +94,10 @@ class DatabaseFetcher:
         FROM
             atlas_panda.jedi_tasks jt
         LEFT JOIN
-            atlas_panda.jedi_datasets jd ON jt.jeditaskid = jd.jeditaskid 
-        WHERE 
+            atlas_panda.jedi_datasets jd ON jt.jeditaskid = jd.jeditaskid
+        WHERE
             jt.jeditaskid IN ({jeditaskid_str})  and (jd.type = 'input' or jd.type = 'pseudo_input')
-        GROUP BY 
+        GROUP BY
             jt.jeditaskid, jt.prodsourcelabel, jt.processingtype, jt.transhome, jt.transpath, jt.cputimeunit, jt.taskname, jt.corecount
         """
         df = pd.read_sql(query, con=self.conn)
@@ -118,7 +119,9 @@ class DatabaseFetcher:
             if not self.conn:
                 retries += 1
                 if retries > max_retries:
-                    raise Exception(f"Failed to connect to the database after {max_retries} retries.")
+                    raise Exception(
+                        f"Failed to connect to the database after {max_retries} retries."
+                    )
                 else:
                     print(f"Connection not active. Retrying in 1 second...")
                     time.sleep(1)  # Wait before retrying
@@ -130,7 +133,9 @@ class DatabaseFetcher:
 
                 # Generate SQL placeholders for insertion
                 columns = ", ".join(data.columns)
-                placeholders = ", ".join([":" + str(i + 1) for i in range(len(data.columns))])
+                placeholders = ", ".join(
+                    [":" + str(i + 1) for i in range(len(data.columns))]
+                )
                 sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
 
                 # Convert DataFrame rows to a list of tuples
@@ -201,4 +206,3 @@ class DatabaseFetcher:
             self.conn = None
         else:
             print("No active database connection to close.")
-

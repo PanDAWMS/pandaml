@@ -28,7 +28,7 @@ def test_get_prediction_valid_data(mock_model_manager, mock_data):
     with patch(
         "scout_ml_package.model.model_pipeline.PredictionPipeline"
     ) as mock_pipeline:
-        mock_pipeline.return_value.preprocess_data.return_value = mock_data
+        mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             100,
             10,
@@ -44,7 +44,7 @@ def test_get_prediction_ramcount_validation_failure(mock_model_manager, mock_dat
     with patch(
         "scout_ml_package.model.model_pipeline.PredictionPipeline"
     ) as mock_pipeline:
-        mock_pipeline.return_value.preprocess_data.return_value = mock_data
+        mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             0,
             10,
@@ -60,7 +60,7 @@ def test_get_prediction_ctime_validation_failure(mock_model_manager, mock_data):
     with patch(
         "scout_ml_package.model.model_pipeline.PredictionPipeline"
     ) as mock_pipeline:
-        mock_pipeline.return_value.preprocess_data.return_value = mock_data
+        mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             100,
             0,
@@ -76,7 +76,7 @@ def test_get_prediction_cpu_eff_validation_failure(mock_model_manager, mock_data
     with patch(
         "scout_ml_package.model.model_pipeline.PredictionPipeline"
     ) as mock_pipeline:
-        mock_pipeline.return_value.preprocess_data.return_value = mock_data
+        mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             100,
             10,
