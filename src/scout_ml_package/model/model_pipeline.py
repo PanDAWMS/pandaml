@@ -314,7 +314,7 @@ class ModelHandlerInProd:
         except Exception as e:
             print(f"Error loading model and scaler: {e}")
 
-    def preprocess_data(
+    def inherited_preprocessor(
         self,
         df,
         numerical_features,
@@ -501,7 +501,7 @@ class PredictionPipeline:
             if mh is None:
                 raise ValueError(f"Model with sequence {model_sequence} not found")
 
-            processed_data, features_to_train = mh.preprocess_data(
+            processed_data, features_to_train = mh.inherited_preprocessor(
                 input_df[features],
                 self.numerical_features,
                 self.category_sequence,
