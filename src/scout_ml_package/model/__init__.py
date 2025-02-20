@@ -10,6 +10,7 @@ from .model_pipeline import (
     ModelManager,
     PredictionPipeline,
     TrainingPipeline,
+    ColumnTransformer,
 )
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "ModelHandlerInProd",
     "ModelManager",
     "PredictionPipeline",
+    "ColumnTransformer",
 ]

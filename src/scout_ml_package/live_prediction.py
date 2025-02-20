@@ -11,7 +11,11 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pandas.io.sql")
 
 last_logged = time.time()
 from scout_ml_package.data.fetch_db_data import DatabaseFetcher
-from scout_ml_package.model.model_pipeline import ModelManager, PredictionPipeline
+from scout_ml_package.model.model_pipeline import (
+    ModelManager,
+    PredictionPipeline,
+    ColumnTransformer,
+)
 from scout_ml_package.utils.logger import Logger
 from scout_ml_package.utils.validator import DataValidator
 from scout_ml_package.utils.message import ConfigLoader, MyListener  # TaskIDListener
@@ -53,10 +57,13 @@ def get_prediction(model_manager, r, task_id):
     if r is None or r.empty:
         logger.error(f"DataFrame is empty or input data is None {task_id}.")
         return None
+    col_transformer = ColumnTransformer()
 
     jeditaskid = r["JEDITASKID"].values[0]
     processor = PredictionPipeline(model_manager)
-    base_df = processor.transform_features(r)
+    # base_df = processor.transform_features(r)
+
+    base_df = col_transformer.col_transformer(r)
 
     # Model 1: RAMCOUNT
     features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence

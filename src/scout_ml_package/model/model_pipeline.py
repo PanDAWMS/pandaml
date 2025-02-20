@@ -214,6 +214,72 @@ class TrainingPipeline:
         return predicted_df, y_pred_text
 
 
+import re
+import pandas as pd
+
+
+class ColumnTransformer:
+    def convert_processingtype(self, processingtype):
+        """
+        Convert PROCESSINGTYPE to 'P'.
+
+        :param processingtype: Input processing type.
+        :return: Converted processing type.
+        """
+        if processingtype is not None and re.search(r"-.*-", processingtype):
+            return "-".join(processingtype.split("-")[-2:])
+        return processingtype
+
+    def convert_transhome(self, transhome):
+        """
+        Convert TRANSHOME to 'F'.
+
+        :param transhome: Input transhome.
+        :return: Converted transhome.
+        """
+        if transhome is None:
+            return None
+
+        if "AnalysisBase" in transhome:
+            return "AnalysisBase"
+        elif "AnalysisTransforms-" in transhome:
+            part_after_dash = transhome.split("-")[1]
+            return part_after_dash.split("_")[0]
+        elif "/" in transhome:
+            return transhome.split("/")[0]
+        else:
+            return transhome.split("-")[0]
+
+    def convert_corecount(self, corecount):
+        """
+        Convert CORECOUNT to 'Core'.
+
+        :param corecount: Input core count.
+        :return: Converted core count.
+        """
+        return "S" if corecount == 1 else "M"
+
+    def transform_features(
+        self, df: pd.DataFrame, selected_columns: list = None
+    ) -> pd.DataFrame:
+        """
+        Apply transformations to the input DataFrame.
+
+        :param df: Input DataFrame.
+        :param selected_columns: Optional list of columns to select after transformation. If None, returns all columns.
+        :return: Transformed DataFrame.
+        """
+        df["P"] = df["PROCESSINGTYPE"].apply(self.convert_processingtype)
+        df["F"] = df["TRANSHOME"].apply(self.convert_transhome)
+        df["CORE"] = df["CORECOUNT"].apply(self.convert_corecount)
+
+        if selected_columns is not None:
+            return df[selected_columns]
+        else:
+            return df
+
+
+# PredictionPipeline--> ModelManager--> ModelHandlerInProd--> TrainingPipeline--> ModelTrainer
 class ModelHandlerInProd:
     def __init__(self, model_sequence: str, target_name: str):
         self.model_sequence = model_sequence
@@ -262,7 +328,6 @@ class ModelHandlerInProd:
             print(f"Missing columns in input DataFrame: {missing_columns}")
             return None, None  # Or raise an exception based on your use case
 
-        df = self.transform_features(df)
         # Perform preprocessing as before
         pprocessor = LiveDataPreprocessor()  # Instantiate if required
         processed_df, encoded_columns = pprocessor.preprocess(
@@ -275,59 +340,59 @@ class ModelHandlerInProd:
         features_to_train = encoded_columns + numerical_features
         return processed_df, features_to_train
 
-    def transform_features(self, df):
-        # Convert PROCESSINGTYPE to 'P'
-        def convert_processingtype(processingtype):
-            if processingtype is not None and re.search(r"-.*-", processingtype):
-                return "-".join(processingtype.split("-")[-2:])
-            return processingtype
-
-        # Convert TRANSHOME to 'F'
-        def convert_transhome(transhome):
-            # Check if transhome is None
-            if transhome is None:
-                return None  # or handle as needed
-
-            if "AnalysisBase" in transhome:
-                return "AnalysisBase"
-            elif "AnalysisTransforms-" in transhome:
-                # Extract the part after 'AnalysisTransforms-'
-                part_after_dash = transhome.split("-")[1]
-                return part_after_dash.split("_")[
-                    0
-                ]  # Assuming you want the first part before any underscore
-            elif "/" in transhome:
-                # Handle cases like AthGeneration/2022-11-09T1600
-                return transhome.split("/")[0]
-            else:
-                # For all other cases, split by '-', return the first segment
-                return transhome.split("-")[0]
-
-        # Convert CORECOUNT to 'Core'
-        def convert_corecount(corecount):
-            return "S" if corecount == 1 else "M"
-
-        # Apply transformations
-        df["P"] = df["PROCESSINGTYPE"].apply(convert_processingtype)
-        df["F"] = df["TRANSHOME"].apply(convert_transhome)
-        df["CORE"] = df["CORECOUNT"].apply(convert_corecount)
-
-        # Return selected columns
-        numerical_features = [
-            "TOTAL_NFILES",
-            "TOTAL_NEVENTS",
-            "DISTINCT_DATASETNAME_COUNT",
-        ]
-        categorical_features = [
-            "PRODSOURCELABEL",
-            "P",
-            "F",
-            "CORE",
-            "CPUTIMEUNIT",
-        ]
-        ["JEDITASKID"] + numerical_features + categorical_features
-
-        return df
+    # def transform_features(self, df):
+    #     # Convert PROCESSINGTYPE to 'P'
+    #     def convert_processingtype(processingtype):
+    #         if processingtype is not None and re.search(r"-.*-", processingtype):
+    #             return "-".join(processingtype.split("-")[-2:])
+    #         return processingtype
+    #
+    #     # Convert TRANSHOME to 'F'
+    #     def convert_transhome(transhome):
+    #         # Check if transhome is None
+    #         if transhome is None:
+    #             return None  # or handle as needed
+    #
+    #         if "AnalysisBase" in transhome:
+    #             return "AnalysisBase"
+    #         elif "AnalysisTransforms-" in transhome:
+    #             # Extract the part after 'AnalysisTransforms-'
+    #             part_after_dash = transhome.split("-")[1]
+    #             return part_after_dash.split("_")[
+    #                 0
+    #             ]  # Assuming you want the first part before any underscore
+    #         elif "/" in transhome:
+    #             # Handle cases like AthGeneration/2022-11-09T1600
+    #             return transhome.split("/")[0]
+    #         else:
+    #             # For all other cases, split by '-', return the first segment
+    #             return transhome.split("-")[0]
+    #
+    #     # Convert CORECOUNT to 'Core'
+    #     def convert_corecount(corecount):
+    #         return "S" if corecount == 1 else "M"
+    #
+    #     # Apply transformations
+    #     df["P"] = df["PROCESSINGTYPE"].apply(convert_processingtype)
+    #     df["F"] = df["TRANSHOME"].apply(convert_transhome)
+    #     df["CORE"] = df["CORECOUNT"].apply(convert_corecount)
+    #
+    #     # Return selected columns
+    #     numerical_features = [
+    #         "TOTAL_NFILES",
+    #         "TOTAL_NEVENTS",
+    #         "DISTINCT_DATASETNAME_COUNT",
+    #     ]
+    #     categorical_features = [
+    #         "PRODSOURCELABEL",
+    #         "P",
+    #         "F",
+    #         "CORE",
+    #         "CPUTIMEUNIT",
+    #     ]
+    #     ["JEDITASKID"] + numerical_features + categorical_features
+    #
+    #     return df
 
     def make_predictions(self, df, features_to_train):
         """Make predictions using the loaded model."""

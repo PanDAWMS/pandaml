@@ -18,7 +18,11 @@ from .utils.message import ConfigLoader, MyListener  # TaskIDListener
 # Importing necessary components from submodules
 from .model.base_model import ModelPipeline  # Import your model classes
 from .model.base_model import ModelTrainer, MultiOutputModel, TrainedModel
-from .model.model_pipeline import ModelHandlerInProd, TrainingPipeline  # ModelLoader,
+from .model.model_pipeline import (
+    ModelHandlerInProd,
+    TrainingPipeline,
+    ColumnTransformer,
+)  # ModelLoader,
 from .utils.logger import Logger
 from .utils.plotting import ClassificationMetricsPlotter, ErrorMetricsPlotter
 from .utils.validator import DataValidator, DummyData, FakeListener
@@ -42,6 +46,7 @@ __all__ = [
     "ModelLoader",
     "LiveDataPreprocessor",
     "ModelHandlerInProd",
+    "ColumnTransformer",
     "FakeListener",
     "DummyData",
     "DataValidator",
