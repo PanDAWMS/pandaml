@@ -57,13 +57,12 @@ def get_prediction(model_manager, r, task_id):
     if r is None or r.empty:
         logger.error(f"DataFrame is empty or input data is None {task_id}.")
         return None
-    col_transformer = ColumnTransformer()
 
     jeditaskid = r["JEDITASKID"].values[0]
     processor = PredictionPipeline(model_manager)
     # base_df = processor.transform_features(r)
 
-    base_df = col_transformer.col_transformer(r)
+    base_df = ColumnTransformer().transform_features(r)
 
     # Model 1: RAMCOUNT
     features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
