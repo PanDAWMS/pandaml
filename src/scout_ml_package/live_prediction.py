@@ -20,8 +20,7 @@ from scout_ml_package.utils.logger import Logger
 from scout_ml_package.utils.validator import DataValidator
 from scout_ml_package.utils.message import ConfigLoader, MyListener  # TaskIDListener
 
-# logger = Logger("demo_logger", "/data/model-data/logs", "pred.log").get_logger()
-logger = Logger("demo_logger", "/data/model-data/logs", "demo.log")
+logger = Logger("demo_logger", "/data/model-data/logs", "prediction_v1.log")
 # Define acceptable ranges for each prediction
 acceptable_ranges = {
     # Adjust these ranges based on your domain knowledge
@@ -61,8 +60,8 @@ def get_prediction(model_manager, r, task_id):
     jeditaskid = r["JEDITASKID"].values[0]
     processor = PredictionPipeline(model_manager)
     base_df = ColumnTransformer().transform_features(r)
-    print(base_df)
-    print(base_df.columns)
+    # print(base_df)
+    # print(base_df.columns)
 
     # Model 1: RAMCOUNT
     features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
