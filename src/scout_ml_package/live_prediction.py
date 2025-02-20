@@ -63,6 +63,7 @@ def get_prediction(model_manager, r, task_id):
     # base_df = processor.transform_features(r)
 
     base_df = ColumnTransformer().transform_features(r)
+    print(base_df)
 
     # Model 1: RAMCOUNT
     features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
