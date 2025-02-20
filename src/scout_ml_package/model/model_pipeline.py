@@ -262,6 +262,7 @@ class ModelHandlerInProd:
             print(f"Missing columns in input DataFrame: {missing_columns}")
             return None, None  # Or raise an exception based on your use case
 
+        df = self.transform_features(df)
         # Perform preprocessing as before
         pprocessor = LiveDataPreprocessor()  # Instantiate if required
         processed_df, encoded_columns = pprocessor.preprocess(
