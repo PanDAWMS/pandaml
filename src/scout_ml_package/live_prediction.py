@@ -21,7 +21,7 @@ from scout_ml_package.utils.validator import DataValidator
 from scout_ml_package.utils.message import ConfigLoader, MyListener  # TaskIDListener
 
 logger = Logger("demo_logger", "/data/model-data/logs", "prediction_v1.log")
-# Define acceptable ranges for each prediction
+# Acceptable ranges for each prediction
 acceptable_ranges = {
     # Adjust these ranges based on your domain knowledge
     "RAMCOUNT": (100, 10000),
@@ -280,7 +280,6 @@ def process_tasks(task_queue):
             logger.error(f"Error processing task ID: {e}")
 
 
-# Example usage (replace with actual implementations)
 if __name__ == "__main__":
     base_path = "/data/model-data/"  # "/data/test/"
     model_manager = ModelManager(base_path)
