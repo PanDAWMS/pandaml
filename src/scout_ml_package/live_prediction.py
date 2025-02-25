@@ -6,12 +6,10 @@ import threading
 import time
 import warnings
 import pandas as pd
-import logging
 import sys
 from datetime import datetime
 import time
 import pandas as pd
-import logging
 from typing import List
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pandas.io.sql")
@@ -166,29 +164,29 @@ def fetch_and_process(task_id_queue):
 #     return base_df
 
 
-def handle_error(task_id, r, error_message, cols_to_write, submission_date, output_db):
-    """
-    Handles errors by logging them and writing error information to the database.
-    """
-    try:
-        error_df = r.copy() if isinstance(r, pd.DataFrame) else pd.DataFrame()
-        error_df["ERROR"] = error_message
-
-        # Add dummy columns if necessary to match the schema of the main table
-        for col in cols_to_write:
-            if col not in error_df.columns:
-                error_df[col] = None
-
-        error_df["SUBMISSION_DATE"] = submission_date
-
-        # Write error data to the database
-        output_db.write_data(
-            error_df[cols_to_write + ["ERROR", "SUBMISSION_DATE"]],
-            "ATLAS_PANDA.PANDAMLTEST",
-        )
-        logger.info(f"Error logged successfully for JEDITASKID: {task_id}")
-    except Exception as e:
-        logger.exception(f"Failed to handle error for JEDITASKID: {task_id}: {e}")
+# def handle_error(task_id, r, error_message, cols_to_write, submission_date, output_db):
+#     """
+#     Handles errors by logging them and writing error information to the database.
+#     """
+#     try:
+#         error_df = r.copy() if isinstance(r, pd.DataFrame) else pd.DataFrame()
+#         error_df["ERROR"] = error_message
+#
+#         # Add dummy columns if necessary to match the schema of the main table
+#         for col in cols_to_write:
+#             if col not in error_df.columns:
+#                 error_df[col] = None
+#
+#         error_df["SUBMISSION_DATE"] = submission_date
+#
+#         # Write error data to the database
+#         output_db.write_data(
+#             error_df[cols_to_write + ["ERROR", "SUBMISSION_DATE"]],
+#             "ATLAS_PANDA.PANDAMLTEST",
+#         )
+#         logger.info(f"Error logged successfully for JEDITASKID: {task_id}")
+#     except Exception as e:
+#         logger.exception(f"Failed to handle error for JEDITASKID: {task_id}: {e}")
 
 
 #
@@ -280,6 +278,60 @@ def handle_error(task_id, r, error_message, cols_to_write, submission_date, outp
 #     except Exception as e:
 #         logger.error(f"Error processing task ID: {e}")
 
+import pandas as pd
+
+
+def handle_error(
+    task_id: int,
+    r: pd.DataFrame,
+    error_message: str,
+    cols_to_write: List[str],
+    submission_date: str,
+    output_db: object,
+) -> None:
+    """
+    Handles errors by logging them and writing error information to the database.
+
+    Parameters:
+    - task_id (int): ID of the task that encountered an error.
+    - r (pd.DataFrame): DataFrame containing task parameters. If None or not a DataFrame, an empty DataFrame is used.
+    - error_message (str): Message describing the error.
+    - cols_to_write (List[str]): List of columns to include in the error data.
+    - submission_date (str): Date when the error occurred.
+    - output_db (object): Output database object.
+
+    Raises:
+    - TypeError: If task_id is not an integer, or if error_message is not a string, or if cols_to_write is not a list.
+    """
+    if not isinstance(task_id, int):
+        raise TypeError("task_id must be an integer")
+    if not isinstance(error_message, str):
+        raise TypeError("error_message must be a string")
+    if not isinstance(cols_to_write, list):
+        raise TypeError("cols_to_write must be a list")
+    if not isinstance(submission_date, str):
+        raise TypeError("submission_date must be a string")
+
+    try:
+        error_df = r.copy() if isinstance(r, pd.DataFrame) else pd.DataFrame()
+        error_df["ERROR"] = error_message
+
+        # Add dummy columns if necessary to match the schema of the main table
+        for col in cols_to_write:
+            if col not in error_df.columns:
+                error_df[col] = None
+
+        error_df["SUBMISSION_DATE"] = submission_date
+
+        # Write error data to the database
+        output_db.write_data(
+            error_df[cols_to_write + ["ERROR", "SUBMISSION_DATE"]],
+            "ATLAS_PANDA.PANDAMLTEST",
+        )
+        logger.info(f"Error logged successfully for JEDITASKID: {task_id}")
+    except Exception as e:
+        logger.exception(f"Failed to handle error for JEDITASKID: {task_id}: {e}")
+
 
 def get_prediction(
     model_manager: "ModelManager", r: pd.DataFrame, task_id: int
@@ -308,12 +360,12 @@ def get_prediction(
     start_time = time.time()
 
     if not model_manager.are_models_loaded():
-        logging.info("Models are not loaded. Loading models...")
+        logger.info("Models are not loaded. Loading models...")
         model_manager.load_models()
-        logging.info("Models re-loaded successfully.")
+        logger.info("Models re-loaded successfully.")
 
     if r is None or r.empty:
-        logging.error(f"DataFrame is empty or input data is None for task ID {task_id}.")
+        logger.error(f"DataFrame is empty or input data is None for task ID {task_id}.")
         return None
 
     jeditaskid = r["JEDITASKID"].values[0]
@@ -329,7 +381,7 @@ def get_prediction(
     if not DataValidator.validate_prediction(
         base_df, "RAMCOUNT", acceptable_ranges, jeditaskid
     ):
-        logging.error(f"RAMCOUNT validation failed for JEDITASKID {jeditaskid}.")
+        logger.error(f"RAMCOUNT validation failed for JEDITASKID {jeditaskid}.")
         return f"M1 failure."
 
     # Update features for subsequent models
@@ -350,14 +402,14 @@ def get_prediction(
         if not DataValidator.validate_ctime_prediction(
             base_df, jeditaskid, additional_ctime_ranges
         ):
-            logging.error(f"CTIME validation failed for JEDITASKID {jeditaskid}.")
+            logger.error(f"CTIME validation failed for JEDITASKID {jeditaskid}.")
             cpu_unit = base_df["CPUTIMEUNIT"].values[0]
             if cpu_unit == "mHS06sPerEvent":
                 return f"M2 failure"
             else:
                 return f"M3 failure"
     except Exception as e:
-        logging.error(f"CTIME prediction failed for JEDITASKID {jeditaskid}: {str(e)}")
+        logger.error(f"CTIME prediction failed for JEDITASKID {jeditaskid}: {str(e)}")
         cpu_unit = base_df["CPUTIMEUNIT"].values[0]
         if cpu_unit == "mHS06sPerEvent":
             return f"{jeditaskid}M2 failure: {str(e)}"
@@ -376,10 +428,10 @@ def get_prediction(
         if not DataValidator.validate_prediction(
             base_df, "CPU_EFF", acceptable_ranges, jeditaskid
         ):
-            logging.error(f"CPU_EFF validation failed for JEDITASKID {jeditaskid}.")
-            return f"{jeditaskid}M4 failure: Validation failed."
+            logger.error(f"CPU_EFF validation failed for JEDITASKID {jeditaskid}.")
+            return f"{jeditaskid} M4 failure: Validation failed."
     except Exception as e:
-        logging.error(f"{jeditaskid} M4 failure: {str(e)}")
+        logger.error(f"{jeditaskid} M4 failure: {str(e)}")
         return f"M4 failure: {str(e)}"
 
     # Update features for subsequent models
@@ -392,10 +444,10 @@ def get_prediction(
             "5", features, base_df
         )
     except Exception as e:
-        logging.error(f"{jeditaskid}M5 failure: {str(e)}")
+        logger.error(f"{jeditaskid}M5 failure: {str(e)}")
         return f"M5 failure: {str(e)}"
 
-    logging.info(
+    logger.info(
         f"JEDITASKID {jeditaskid} processed successfully in {time.time() - start_time:.2f} seconds"
     )
     base_df[["RAMCOUNT", "CTIME", "CPU_EFF"]] = base_df[
@@ -432,19 +484,17 @@ def process_single_task(
 
     submission_date = datetime.now()
     try:
-        logging.info(f"Processing task ID: {task_id}")
+        logger.info(f"Processing task ID: {task_id}")
 
         # Fetch task parameters
         r = input_db.fetch_task_param(task_id)
         if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
-            logging.info(
-                f"Task parameters fetched successfully for JEDITASKID: {task_id}"
-            )
+            logger.info(f"Task parameters fetched successfully for JEDITASKID: {task_id}")
             # Generate prediction
             try:
                 result = get_prediction(model_manager, r, task_id)
                 if isinstance(result, pd.DataFrame):
-                    logging.info(
+                    logger.info(
                         f"Prediction completed successfully for JEDITASKID: {task_id}"
                     )
                     submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -464,7 +514,7 @@ def process_single_task(
                         "IOINTENSITY": result["IOINTENSITY"].values[0],
                         "submission_time": submission_date,
                     }
-                    logging.info(f"Success message: {message}")
+                    logger.info(f"Success message: {message}")
 
                 else:
                     # Handle non-DataFrame results as an error
@@ -473,21 +523,19 @@ def process_single_task(
                         "status": "failure",
                         "submission_time": submission_date,
                     }
-                    logging.info(f"Failure message: {message}")
+                    logger.info(f"Failure message: {message}")
                     raise ValueError(
                         f"Prediction failed for JEDITASKID: {task_id}. Result: {result}"
                     )
 
             except Exception as e:
                 if hasattr(e, "args") and "DPY-1001" in e.args[0].message:
-                    logging.error(
+                    logger.error(
                         f"Database connection error: {e}. Exiting to trigger service restart."
                     )
                     sys.exit(1)  # Exit with a non-zero status to trigger restart
                 else:
-                    logging.error(
-                        f"Oracle interface error for JEDITASKID: {task_id}: {e}"
-                    )
+                    logger.error(f"Oracle interface error for JEDITASKID: {task_id}: {e}")
                     handle_error(
                         task_id, r, str(e), cols_to_write, submission_date, output_db
                     )
@@ -497,7 +545,7 @@ def process_single_task(
             error_message = (
                 f"Invalid or empty DataFrame fetched for JEDITASKID: {task_id}"
             )
-            logging.error(error_message)
+            logger.error(error_message)
             handle_error(
                 task_id,
                 r if isinstance(r, pd.DataFrame) else None,
@@ -508,7 +556,7 @@ def process_single_task(
             )
 
     except Exception as e:
-        logging.error(f"Error processing task ID: {e}")
+        logger.error(f"Error processing task ID: {e}")
 
 
 if __name__ == "__main__":
