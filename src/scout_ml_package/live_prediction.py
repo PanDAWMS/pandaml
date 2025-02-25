@@ -302,8 +302,8 @@ def get_prediction(
         raise TypeError("model_manager must be an instance of ModelManager")
     if not isinstance(r, pd.DataFrame):
         raise TypeError("r must be a pandas DataFrame")
-    if not isinstance(task_id, str):
-        raise TypeError("task_id must be a string")
+    if not isinstance(task_id, int):
+        raise TypeError("task_id must be a integer")
 
     start_time = time.time()
 
