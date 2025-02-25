@@ -286,7 +286,7 @@ def handle_error(
     r: pd.DataFrame,
     error_message: str,
     cols_to_write: List[str],
-    submission_date: str,
+    submission_date: datetime,
     output_db: object,
 ) -> None:
     """
@@ -309,8 +309,8 @@ def handle_error(
         raise TypeError("error_message must be a string")
     if not isinstance(cols_to_write, list):
         raise TypeError("cols_to_write must be a list")
-    if not isinstance(submission_date, str):
-        raise TypeError("submission_date must be a string")
+    if not isinstance(submission_date, datetime):
+        raise TypeError("submission_date must be a datetime")
 
     try:
         error_df = r.copy() if isinstance(r, pd.DataFrame) else pd.DataFrame()
