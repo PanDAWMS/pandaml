@@ -1,5 +1,8 @@
+# Standard library imports
 import os
+from typing import Tuple
 
+# Third-party imports
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import (
@@ -10,13 +13,25 @@ from sklearn.metrics import (
     f1_score,
     mean_absolute_error,
     precision_score,
-    r2_score,
     recall_score,
     root_mean_squared_error,
+    r2_score,
 )
 
 
 class ErrorMetricsPlotter:
+    """
+    Calculates and plots error metrics for actual vs predicted values.
+
+    Attributes:
+    - df (pd.DataFrame): DataFrame containing actual and predicted values.
+    - actual_column (str): Name of the column with actual values.
+    - predicted_column (str): Name of the column with predicted values.
+    - plot_directory (str): Directory where plots will be saved.
+    - actual (pd.Series): Series of actual values.
+    - predicted (pd.Series): Series of predicted values.
+    """
+
     def __init__(
         self,
         df: pd.DataFrame,
@@ -24,6 +39,25 @@ class ErrorMetricsPlotter:
         predicted_column: str = "Predicted_RAMCOUNT",
         plot_directory: str = "plots",
     ):
+        """
+        Initializes the ErrorMetricsPlotter with a DataFrame and column names.
+
+        Parameters:
+        - df (pd.DataFrame): DataFrame containing actual and predicted values.
+        - actual_column (str, optional): Name of the column with actual values. Defaults to "RAMCOUNT".
+        - predicted_column (str, optional): Name of the column with predicted values. Defaults to "Predicted_RAMCOUNT".
+        - plot_directory (str, optional): Directory where plots will be saved. Defaults to "plots".
+
+        Raises:
+        - TypeError: If df is not a DataFrame or if actual_column/predicted_column are not strings.
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("df must be a pandas DataFrame")
+        if not isinstance(actual_column, str) or not isinstance(predicted_column, str):
+            raise TypeError("actual_column and predicted_column must be strings")
+        if not isinstance(plot_directory, str):
+            raise TypeError("plot_directory must be a string")
+
         self.df = df
         self.actual_column = actual_column
         self.predicted_column = predicted_column
@@ -34,7 +68,13 @@ class ErrorMetricsPlotter:
         # Ensure the plot directory exists
         os.makedirs(self.plot_directory, exist_ok=True)
 
-    def calculate_metrics(self):
+    def calculate_metrics(self) -> Tuple[float, float, float, float]:
+        """
+        Calculates error metrics: MAE, RMSE, R², and MAPE.
+
+        Returns:
+        - Tuple[float, float, float, float]: MAE, RMSE, R², and MAPE.
+        """
         mae = mean_absolute_error(self.actual, self.predicted)
         rmse = root_mean_squared_error(self.actual, self.predicted)
         r2 = r2_score(self.actual, self.predicted)
@@ -47,7 +87,10 @@ class ErrorMetricsPlotter:
         ).mean() * 100
         return mae, rmse, r2, mape
 
-    def print_metrics(self):
+    def print_metrics(self) -> None:
+        """
+        Prints error metrics.
+        """
         mae, rmse, r2, mape = self.calculate_metrics()
         print(f"Metrics for {self.predicted_column} compared to {self.actual_column}:")
         print(f"Mean Absolute Error (MAE): {mae}")
@@ -55,7 +98,10 @@ class ErrorMetricsPlotter:
         print(f"R-squared (R²): {r2}")
         print(f"Mean Absolute Percentage Error (MAPE): {mape}%")
 
-    def plot_metrics(self):
+    def plot_metrics(self) -> None:
+        """
+        Plots error metrics and saves the plot to the specified directory.
+        """
         mae, rmse, r2, mape = self.calculate_metrics()
 
         plt.figure(figsize=(18, 6))
@@ -129,6 +175,18 @@ class ErrorMetricsPlotter:
 
 
 class ClassificationMetricsPlotter:
+    """
+    Plots and calculates metrics for classification models.
+
+    Attributes:
+    - df (pd.DataFrame): DataFrame containing actual and predicted values.
+    - actual_column (str): Name of the column with actual values.
+    - predicted_column (str): Name of the column with predicted values.
+    - plot_directory (str): Directory where plots will be saved.
+    - actual (pd.Series): Series of actual values.
+    - predicted (pd.Series): Series of predicted values.
+    """
+
     def __init__(
         self,
         df: pd.DataFrame,
@@ -136,6 +194,25 @@ class ClassificationMetricsPlotter:
         predicted_column: str,
         plot_directory: str = "plots",
     ):
+        """
+        Initializes the ClassificationMetricsPlotter with a DataFrame and column names.
+
+        Parameters:
+        - df (pd.DataFrame): DataFrame containing actual and predicted values.
+        - actual_column (str): Name of the column with actual values.
+        - predicted_column (str): Name of the column with predicted values.
+        - plot_directory (str, optional): Directory where plots will be saved. Defaults to "plots".
+
+        Raises:
+        - TypeError: If df is not a DataFrame or if actual_column/predicted_column are not strings.
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("df must be a pandas DataFrame")
+        if not isinstance(actual_column, str) or not isinstance(predicted_column, str):
+            raise TypeError("actual_column and predicted_column must be strings")
+        if not isinstance(plot_directory, str):
+            raise TypeError("plot_directory must be a string")
+
         self.df = df
         self.actual_column = actual_column
         self.predicted_column = predicted_column
@@ -146,7 +223,10 @@ class ClassificationMetricsPlotter:
         # Ensure the plot directory exists
         os.makedirs(self.plot_directory, exist_ok=True)
 
-    def plot_confusion_matrix(self):
+    def plot_confusion_matrix(self) -> None:
+        """
+        Plots the confusion matrix for actual vs predicted values.
+        """
         # Compute confusion matrix
         cm = confusion_matrix(self.actual, self.predicted)
 
@@ -164,12 +244,13 @@ class ClassificationMetricsPlotter:
         plt.close()
         print(f"Confusion matrix plot saved to {plot_path}")
 
-    # def plot_classification_report(self):
-    #     """Add more plots or adjustments based on your needs, such as precision-recall curves, etc."""
-    #     # This method can be expanded to include other classification visualizations
-    #     pass
+    def calculate_and_print_metrics(self) -> Tuple[float, float, float, float]:
+        """
+        Calculates and prints evaluation metrics for classification.
 
-    def calculate_and_print_metrics(self):
+        Returns:
+        - Tuple[float, float, float, float]: Accuracy, Precision, Recall, F1 Score.
+        """
         # Calculate evaluation metrics for classification
         accuracy = accuracy_score(self.actual, self.predicted)
         precision = precision_score(
@@ -198,70 +279,4 @@ class ClassificationMetricsPlotter:
         # Additional metrics like confusion matrix can also be printed if needed:
         cm = confusion_matrix(self.actual, self.predicted)
         print("Confusion Matrix:\n", cm)
-
-
-# Example usage:
-# df = pd.DataFrame(...)  # your DataFrame with actual and predicted columns
-# plotter = ErrorMetricsPlotter(df)
-# plotter.print_metrics()
-# plotter.plot_metrics()
-
-
-# class PredictionVisualizer:
-#     def __init__(self, trained_model: TrainedModel):
-#         """
-#         Initialize the PredictionVisualizer.
-#
-#         Args:
-#             trained_model (TrainedModel): The trained model to visualize predictions for.
-#         """
-#         self.trained_model = trained_model
-#
-#     def plot_predictions(
-#         self,
-#         X_test: pd.DataFrame,
-#         y_test: pd.DataFrame,
-#         num_samples: int = 100,
-#     ):
-#         """
-#         Plot predictions against actual values.
-#
-#         Args:
-#             X_test (pd.DataFrame): The test input data.
-#             y_test (pd.DataFrame): The test target data.
-#             num_samples (int): Number of samples to plot. Defaults to 100.
-#         """
-#         y_pred = self.trained_model.predict(X_test)
-#         num_targets = y_pred.shape[1]
-#         fig, axes = plt.subplots(num_targets, 2, figsize=(15, 5 * num_targets))
-#
-#         for i in range(num_targets):
-#             ax1 = axes[i, 0]
-#             ax2 = axes[i, 1]
-#
-#             # Scatter plot
-#             sns.scatterplot(
-#                 x=y_test.iloc[:num_samples, i],
-#                 y=y_pred[:num_samples, i],
-#                 ax=ax1,
-#             )
-#             ax1.set_xlabel("Actual")
-#             ax1.set_ylabel("Predicted")
-#             ax1.set_title(f"Target {i + 1} - Scatter Plot")
-#
-#             # Histogram plot
-#             actual_values = y_test.iloc[:num_samples, i]
-#             predicted_values = y_pred[:num_samples, i]
-#             ax2.hist(
-#                 [actual_values, predicted_values],
-#                 bins=20,
-#                 label=["Actual", "Predicted"],
-#                 density=True,
-#             )
-#             ax2.set_xlabel("Value")
-#             ax2.set_ylabel("Density")
-#             ax2.set_title(f"Target {i + 1} - Histogram")
-#             ax2.legend()
-#
-#         plt.tight_layout()
-#         plt.show()
+        return accuracy, precision, recall, f1
