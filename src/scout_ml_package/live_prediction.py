@@ -425,8 +425,8 @@ def process_single_task(
     Raises:
     - TypeError: If task_id is not a string or if cols_to_write is not a list.
     """
-    if not isinstance(task_id, str):
-        raise TypeError("task_id must be a string")
+    if not isinstance(task_id, int):
+        raise TypeError("task_id must be a integer")
     if not isinstance(cols_to_write, list):
         raise TypeError("cols_to_write must be a list")
 
