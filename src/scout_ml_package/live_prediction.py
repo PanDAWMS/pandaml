@@ -53,6 +53,11 @@ def fetch_and_enqueue(task_id_queue, task_queue):
 def get_prediction(model_manager, r, task_id):
     start_time = time.time()
 
+    if not model_manager.are_models_loaded():
+        logger.info("Models are not loaded. Loading models...")
+        model_manager.load_models()
+        logger.info("Models re-loaded successfully.")
+
     if r is None or r.empty:
         logger.error(f"DataFrame is empty or input data is None {task_id}.")
         return None

@@ -370,10 +370,34 @@ class ModelHandlerInProd:
 ############################
 
 
+#
+# class ModelManager:
+#     def __init__(self, base_path):
+#         self.models = {}
+#         self.base_path = base_path
+#
+#     def load_models(self):
+#         model_configs = [
+#             ("1", "ramcount"),
+#             ("2", "cputime_low"),
+#             ("3", "cputime_high"),
+#             ("4", "cpu_eff"),
+#             ("5", "io"),
+#         ]
+#         for sequence, target_name in model_configs:
+#             model = ModelHandlerInProd(model_sequence=sequence, target_name=target_name)
+#             model.load_model_and_scaler(self.base_path)
+#             self.models[sequence] = model
+#         # logger.info("All models loaded successfully")
+#
+#     def get_model(self, sequence):
+#         return self.models.get(sequence)
+#
 class ModelManager:
     def __init__(self, base_path):
         self.models = {}
         self.base_path = base_path
+        self.models_loaded = False  # New attribute to track model loading status
 
     def load_models(self):
         model_configs = [
@@ -387,9 +411,14 @@ class ModelManager:
             model = ModelHandlerInProd(model_sequence=sequence, target_name=target_name)
             model.load_model_and_scaler(self.base_path)
             self.models[sequence] = model
-        # logger.info("All models loaded successfully")
+        self.models_loaded = True  # Set to True after loading models
+
+    def are_models_loaded(self):
+        return self.models_loaded
 
     def get_model(self, sequence):
+        if not self.models_loaded:
+            raise ValueError("Models are not loaded")
         return self.models.get(sequence)
 
 
