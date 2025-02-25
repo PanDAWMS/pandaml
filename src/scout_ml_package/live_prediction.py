@@ -35,19 +35,40 @@ additional_ctime_ranges = {
 }
 
 
-def fetch_and_enqueue(task_id_queue, task_queue):
+# def fetch_and_enqueue(task_id_queue, task_queue):
+#     while True:
+#         try:
+#             task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
+#             if task_id is not None:
+#                 task_queue.put(task_id)
+#                 logger.info(f"Added task ID {task_id} to queue")
+#             else:
+#                 logger.info("No task ID received.")
+#         except queue.Empty:
+#             pass
+#         except Exception as e:
+#             logger.error(f"Error fetching task ID: {e}")
+
+
+def fetch_and_process(task_id_queue):
+    print("Task processing thread started")
     while True:
         try:
             task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
             if task_id is not None:
-                task_queue.put(task_id)
-                logger.info(f"Added task ID {task_id} to queue")
+                print(f"Processing task ID: {task_id}")
+                logger.info(f"Processing task ID: {task_id}")
+                process_single_task(
+                    task_id, input_db, output_db, model_manager, cols_to_write
+                )
             else:
+                print("No task ID received.")
                 logger.info("No task ID received.")
         except queue.Empty:
             pass
         except Exception as e:
-            logger.error(f"Error fetching task ID: {e}")
+            logger.error(f"Error processing task ID: {e}")
+            print(f"Error processing task ID: {e}")
 
 
 def get_prediction(model_manager, r, task_id):
@@ -266,23 +287,23 @@ def process_single_task(task_id, input_db, output_db, model_manager, cols_to_wri
         logger.error(f"Error processing task ID: {e}")
 
 
-def process_tasks(task_queue):
-    while True:
-        try:
-            if not task_queue.empty():
-                task_id = task_queue.get()
-                process_single_task(
-                    task_id, input_db, output_db, model_manager, cols_to_write
-                )
-                remaining_tasks = task_queue.qsize()
-                print(
-                    f"Saved result for task {task_id}. Remaining tasks in queue: {remaining_tasks}"
-                )
-            else:
-                # Check frequently for new task IDs
-                time.sleep(0.1)  # Check every 100 ms
-        except Exception as e:
-            logger.error(f"Error processing task ID: {e}")
+# def process_tasks(task_queue):
+#     while True:
+#         try:
+#             if not task_queue.empty():
+#                 task_id = task_queue.get()
+#                 process_single_task(
+#                     task_id, input_db, output_db, model_manager, cols_to_write
+#                 )
+#                 remaining_tasks = task_queue.qsize()
+#                 print(
+#                     f"Saved result for task {task_id}. Remaining tasks in queue: {remaining_tasks}"
+#                 )
+#             else:
+#                 # Check frequently for new task IDs
+#                 time.sleep(0.1)  # Check every 100 ms
+#         except Exception as e:
+#             logger.error(f"Error processing task ID: {e}")
 
 
 if __name__ == "__main__":
@@ -316,7 +337,7 @@ if __name__ == "__main__":
     config_loader = ConfigLoader(config_path)
     # Create queues to hold task IDs
     task_id_queue = queue.Queue()
-    task_queue = queue.Queue()
+    # task_queue = queue.Queue()
 
     # Create and start listener
     listener = MyListener(
@@ -328,20 +349,34 @@ if __name__ == "__main__":
         config_loader.queue_name,
     )
 
-    # Start threads
-    fetch_thread = threading.Thread(
-        target=fetch_and_enqueue, args=(task_id_queue, task_queue)
-    )
+    # # Start threads
+    # fetch_thread = threading.Thread(
+    #     target=fetch_and_enqueue, args=(task_id_queue, task_queue)
+    # )
+    # fetch_thread.daemon = True
+    # fetch_thread.start()
+    #
+    # process_thread = threading.Thread(target=process_tasks, args=(task_queue,))
+    # process_thread.daemon = True
+    # process_thread.start()
+    #
+    # # Keep the main thread running
+    # while True:
+    #     time.sleep(1)
+
+    # Start thread
+    fetch_thread = threading.Thread(target=fetch_and_process, args=(task_id_queue,))
     fetch_thread.daemon = True
     fetch_thread.start()
 
-    process_thread = threading.Thread(target=process_tasks, args=(task_queue,))
-    process_thread.daemon = True
-    process_thread.start()
-
     # Keep the main thread running
+
+    print_time = time.time()
     while True:
-        time.sleep(1)
+        if time.time() - print_time >= 120:  # Check if 2 minutes have passed
+            print("Main thread alive", end="\r")
+            print_time = time.time()  # Reset the timer
+        time.sleep(1)  # Sleep for 1 second
 
     print("All tasks processed")
     input_db.close_connection()
