@@ -40,25 +40,24 @@ additional_ctime_ranges = {
 }
 
 
-def fetch_and_process(task_id_queue):
-    print("Task processing thread started")
-    while True:
-        try:
-            task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
-            if task_id is not None:
-                print(f"Processing task ID: {task_id}")
-                logger.info(f"Processing task ID: {task_id}")
-                process_single_task(
-                    task_id, input_db, output_db, model_manager, cols_to_write
-                )
-            else:
-                print("No task ID received.")
-                logger.info("No task ID received.")
-        except queue.Empty:
-            pass
-        except Exception as e:
-            logger.error(f"Error processing task ID: {e}")
-            print(f"Error processing task ID: {e}")
+# def fetch_and_process(task_id_queue):
+#     print("Task processing thread started")
+#     while True:
+#         try:
+#             task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
+#             if task_id is not None:
+#                 logger.info(f"Processing task ID: {task_id}")
+#                 process_single_task(
+#                     task_id, input_db, output_db, model_manager, cols_to_write
+#                 )
+#             else:
+#                 print("No task ID received.")
+#                 logger.info("No task ID received.")
+#         except queue.Empty:
+#             pass
+#         except Exception as e:
+#             logger.error(f"Error processing task ID: {e}")
+#             print(f"Error processing task ID: {e}")
 
 
 #
@@ -279,6 +278,51 @@ def fetch_and_process(task_id_queue):
 #         logger.error(f"Error processing task ID: {e}")
 
 import pandas as pd
+import queue
+
+
+def fetch_and_process(
+    task_id_queue: queue.Queue,
+    input_db: object,
+    output_db: object,
+    model_manager: "ModelManager",
+    cols_to_write: List[str],
+) -> None:
+    """
+    Fetches task IDs from a queue and processes them using a model.
+
+    Parameters:
+    - task_id_queue (queue.Queue): Queue containing task IDs to process.
+    - input_db (object): Input database object.
+    - output_db (object): Output database object.
+    - model_manager (ModelManager): Instance of ModelManager for accessing models.
+    - cols_to_write (List[str]): List of columns to write to the output database.
+
+    Raises:
+    - TypeError: If task_id_queue is not a queue.Queue or if cols_to_write is not a list.
+    """
+    if not isinstance(task_id_queue, queue.Queue):
+        raise TypeError("task_id_queue must be a queue.Queue")
+    if not isinstance(cols_to_write, list):
+        raise TypeError("cols_to_write must be a list")
+
+    print("Task processing thread started")
+    while True:
+        try:
+            task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
+            if task_id is not None:
+                logger.info(f"Processing task ID: {task_id}")
+                process_single_task(
+                    task_id, input_db, output_db, model_manager, cols_to_write
+                )
+            else:
+                print("No task ID received.")
+                logger.info("No task ID received.")
+        except queue.Empty:
+            pass
+        except Exception as e:
+            logger.error(f"Error processing task ID: {e}")
+            print(f"Error processing task ID: {e}")
 
 
 def handle_error(
