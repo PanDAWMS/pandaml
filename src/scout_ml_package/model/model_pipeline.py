@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from keras.layers import TFSMLayer
+from sklearn.preprocessing import MinMaxScaler
 
 # Local application imports
 from scout_ml_package.data import (
@@ -75,7 +76,7 @@ class TrainingPipeline:
         pd.DataFrame,
         pd.DataFrame,
         List[str],
-        tf.keras.preprocessing.MinMaxScaler,
+        MinMaxScaler,
     ]:
         """
         Preprocesses training, testing, and future data.
