@@ -647,7 +647,11 @@ if __name__ == "__main__":
     )
 
     # Start thread
-    fetch_thread = threading.Thread(target=fetch_and_process, args=(task_id_queue,))
+
+    fetch_thread = threading.Thread(
+        target=fetch_and_process,
+        args=(task_id_queue, input_db, output_db, model_manager, cols_to_write),
+    )
     fetch_thread.daemon = True
     fetch_thread.start()
 
