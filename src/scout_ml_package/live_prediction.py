@@ -12,6 +12,7 @@ from datetime import datetime
 import time
 import pandas as pd
 import logging
+from typing import List
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pandas.io.sql")
 
@@ -281,7 +282,7 @@ def handle_error(task_id, r, error_message, cols_to_write, submission_date, outp
 
 
 def get_prediction(
-    model_manager: "ModelManager", r: pd.DataFrame, task_id: str
+    model_manager: "ModelManager", r: pd.DataFrame, task_id: int
 ) -> pd.DataFrame:
     """
     Generates predictions for a task using multiple models.
