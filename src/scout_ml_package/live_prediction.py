@@ -259,8 +259,110 @@ def get_prediction(
     return base_df
 
 
+#
+# def process_single_task(
+#     task_id: str,
+#     input_db: DatabaseFetcher,
+#     output_db: DatabaseFetcher,
+#     model_manager: ModelManager,
+#     cols_to_write: List[str],
+# ) -> None:
+#     """
+#     Processes a single task by fetching its parameters, generating predictions,
+#     and handling errors appropriately.
+#
+#     Parameters:
+#     - task_id (str): ID of the task to process.
+#     - input_db (object): Input database object.
+#     - output_db (object): Output database object.
+#     - model_manager (ModelManager): Instance of ModelManager for accessing models.
+#     - cols_to_write (List[str]): List of columns to write to the output database.
+#
+#     Raises:
+#     - TypeError: If task_id is not a string or if cols_to_write is not a list.
+#     """
+#     if not isinstance(task_id, int):
+#         raise TypeError("task_id must be a integer")
+#     if not isinstance(cols_to_write, list):
+#         raise TypeError("cols_to_write must be a list")
+#
+#     submission_date = datetime.now()
+#     try:
+#         logger.info(f"Processing task ID: {task_id}")
+#
+#         # Fetch task parameters
+#         r = input_db.fetch_task_param(task_id)
+#         if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
+#             logger.info(f"Task parameters fetched successfully for JEDITASKID: {task_id}")
+#             # Generate prediction
+#             try:
+#                 result = get_prediction(model_manager, r, task_id)
+#                 if isinstance(result, pd.DataFrame):
+#                     logger.info(
+#                         f"Prediction completed successfully for JEDITASKID: {task_id}"
+#                     )
+#                     submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#                     # Process and write results to the output database
+#                     result = result[cols_to_write].copy()
+#                     result["SUBMISSION_DATE"] = datetime.now()
+#                     # result["SUBMISSION_DATE"] = result["SUBMISSION_DATE"].dt.strftime('%Y-%m-%d %H:%M:%S')
+#                     output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
+#
+#                     # Prepare success message
+#                     message = {
+#                         "taskid": result["JEDITASKID"].values[0],
+#                         "status": "success",
+#                         "RAMCOUNT": result["RAMCOUNT"].values[0],
+#                         "CTIME": result["CTIME"].values[0],
+#                         "CPU_EFF": result["CPU_EFF"].values[0],
+#                         "IOINTENSITY": result["IOINTENSITY"].values[0],
+#                         "submission_time": submission_date,
+#                     }
+#                     logger.info(f"Success message: {message}")
+#
+#                 else:
+#                     # Handle non-DataFrame results as an error
+#                     message = {
+#                         "taskid": task_id,
+#                         "status": "failure",
+#                         "submission_time": submission_date,
+#                     }
+#                     logger.info(f"Failure message: {message}")
+#                     raise ValueError(
+#                         f"Prediction failed for JEDITASKID: {task_id}. Result: {result}"
+#                     )
+#
+#             except Exception as e:
+#                 if hasattr(e, "args") and "DPY-1001" in e.args[0].message:
+#                     logger.error(
+#                         f"Database connection error: {e}. Exiting to trigger service restart."
+#                     )
+#                     sys.exit(1)  # Exit with a non-zero status to trigger restart
+#                 else:
+#                     logger.error(f"Oracle interface error for JEDITASKID: {task_id}: {e}")
+#                     handle_error(
+#                         task_id, r, str(e), cols_to_write, submission_date, output_db
+#                     )
+#
+#         else:
+#             # Handle invalid or empty DataFrame `r`
+#             error_message = (
+#                 f"Invalid or empty DataFrame fetched for JEDITASKID: {task_id}"
+#             )
+#             logger.error(error_message)
+#             handle_error(
+#                 task_id,
+#                 r if isinstance(r, pd.DataFrame) else None,
+#                 error_message,
+#                 cols_to_write,
+#                 submission_date,
+#                 output_db,
+#             )
+#
+#     except Exception as e:
+#         logger.error(f"Error processing task ID: {e}")
 def process_single_task(
-    task_id: str,
+    task_id: int,
     input_db: DatabaseFetcher,
     output_db: DatabaseFetcher,
     model_manager: ModelManager,
@@ -271,17 +373,17 @@ def process_single_task(
     and handling errors appropriately.
 
     Parameters:
-    - task_id (str): ID of the task to process.
-    - input_db (object): Input database object.
-    - output_db (object): Output database object.
+    - task_id (int): ID of the task to process.
+    - input_db (DatabaseFetcher): Input database object.
+    - output_db (DatabaseFetcher): Output database object.
     - model_manager (ModelManager): Instance of ModelManager for accessing models.
     - cols_to_write (List[str]): List of columns to write to the output database.
 
     Raises:
-    - TypeError: If task_id is not a string or if cols_to_write is not a list.
+    - TypeError: If task_id is not an integer or if cols_to_write is not a list.
     """
     if not isinstance(task_id, int):
-        raise TypeError("task_id must be a integer")
+        raise TypeError("task_id must be an integer")
     if not isinstance(cols_to_write, list):
         raise TypeError("cols_to_write must be a list")
 
@@ -304,7 +406,6 @@ def process_single_task(
                     # Process and write results to the output database
                     result = result[cols_to_write].copy()
                     result["SUBMISSION_DATE"] = datetime.now()
-                    # result["SUBMISSION_DATE"] = result["SUBMISSION_DATE"].dt.strftime('%Y-%m-%d %H:%M:%S')
                     output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
 
                     # Prepare success message
@@ -342,6 +443,7 @@ def process_single_task(
                     handle_error(
                         task_id, r, str(e), cols_to_write, submission_date, output_db
                     )
+                    # Consider raising the exception here to ensure the script exits
 
         else:
             # Handle invalid or empty DataFrame `r`
@@ -360,6 +462,8 @@ def process_single_task(
 
     except Exception as e:
         logger.error(f"Error processing task ID: {e}")
+        # Consider raising the exception here to ensure the script exits
+        raise
 
 
 if __name__ == "__main__":
