@@ -19,7 +19,7 @@ from scout_ml_package.model.model_pipeline import (
 )
 from scout_ml_package.utils.logger import Logger
 from scout_ml_package.utils.validator import DataValidator
-from scout_ml_package.utils.message import ConfigLoader, MyListener  # TaskIDListener
+from scout_ml_package.utils.message import ConfigLoader, MyListener
 
 # Suppress specific warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pandas.io.sql")
@@ -27,17 +27,17 @@ last_logged = time.time()
 
 logger = Logger("demo_logger", "/data/model-data/logs", "prediction_v1.log")
 # Acceptable ranges for each prediction
-acceptable_ranges = {
-    # Adjust these ranges based on your domain knowledge
-    "RAMCOUNT": (100, 10000),
-    "CTIME": (0.1, 10000),
-    "CPU_EFF": (0, 100),
-}
-
-additional_ctime_ranges = {
-    "low": (0.1, 10),
-    "high": (10, 10000),
-}
+# acceptable_ranges = {
+#     # Adjust these ranges based on your domain knowledge
+#     "RAMCOUNT": (100, 10000),
+#     "CTIME": (0.1, 10000),
+#     "CPU_EFF": (0, 100),
+# }
+#
+# additional_ctime_ranges = {
+#     "low": (0.1, 10),
+#     "high": (10, 10000),
+# }
 
 
 def fetch_and_process(
@@ -182,10 +182,10 @@ def get_prediction(
     )
 
     if not DataValidator.validate_prediction(
-        base_df, "RAMCOUNT", acceptable_ranges, jeditaskid
+        base_df, "RAMCOUNT", DataValidator.acceptable_ranges, jeditaskid
     ):
         logger.error(f"RAMCOUNT validation failed for JEDITASKID {jeditaskid}.")
-        return f"M1 failure."
+        return "M1 failure."
 
     # Update features for subsequent models
     processor.numerical_features.append("RAMCOUNT")
@@ -203,14 +203,14 @@ def get_prediction(
             )
 
         if not DataValidator.validate_ctime_prediction(
-            base_df, jeditaskid, additional_ctime_ranges
+            base_df, jeditaskid, DataValidator.additional_ctime_ranges
         ):
             logger.error(f"CTIME validation failed for JEDITASKID {jeditaskid}.")
             cpu_unit = base_df["CPUTIMEUNIT"].values[0]
             if cpu_unit == "mHS06sPerEvent":
-                return f"M2 failure"
+                return "M2 failure"
             else:
-                return f"M3 failure"
+                return "M3 failure"
     except Exception as e:
         logger.error(f"CTIME prediction failed for JEDITASKID {jeditaskid}: {str(e)}")
         cpu_unit = base_df["CPUTIMEUNIT"].values[0]
@@ -229,7 +229,7 @@ def get_prediction(
             "4", features, base_df
         )
         if not DataValidator.validate_prediction(
-            base_df, "CPU_EFF", acceptable_ranges, jeditaskid
+            base_df, "CPU_EFF", DataValidator.acceptable_ranges, jeditaskid
         ):
             logger.error(f"CPU_EFF validation failed for JEDITASKID {jeditaskid}.")
             return f"{jeditaskid} M4 failure: Validation failed."

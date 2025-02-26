@@ -70,6 +70,17 @@ class DataValidator:
     - validate_ctime_prediction: Validates CTIME predictions using alternative ranges.
     """
 
+    acceptable_ranges = {
+        "RAMCOUNT": (100, 10000),
+        "CTIME": (0.1, 10000),
+        "CPU_EFF": (0, 100),
+    }
+
+    additional_ctime_ranges = {
+        "low": (0.1, 10),
+        "high": (10, 10000),
+    }
+
     @classmethod
     def check_predictions(
         cls, df: pd.DataFrame, column: str, acceptable_ranges: dict
