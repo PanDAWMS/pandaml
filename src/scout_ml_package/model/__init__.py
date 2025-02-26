@@ -1,26 +1,21 @@
 # src/scout_ml_package/model/__init__.py
-from .base_model import (
-    ModelPipeline,
-    ModelTrainer,
-    MultiOutputModel,
-    TrainedModel,
-)
+from .base_model import ModelPipeline, ModelTrainer, MultiOutputModel, TrainedModel
 from .model_pipeline import (
+    ColumnTransformer,
     ModelHandlerInProd,
     ModelManager,
     PredictionPipeline,
     TrainingPipeline,
-    ColumnTransformer,
 )
 
 __all__ = [
-    "MultiOutputModel",
-    "ModelTrainer",
-    "ModelPipeline",
-    "TrainingPipeline",
-    "TrainedModel",
+    "ColumnTransformer",
     "ModelHandlerInProd",
     "ModelManager",
+    "ModelPipeline",
+    "ModelTrainer",
+    "MultiOutputModel",
     "PredictionPipeline",
-    "ColumnTransformer",
+    "TrainingPipeline",
+    "TrainedModel",
 ]

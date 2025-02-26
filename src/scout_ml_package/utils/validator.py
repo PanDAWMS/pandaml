@@ -7,7 +7,10 @@ from scout_ml_package.utils.logger import Logger
 
 # Get the logger instance using the singleton pattern
 logger = Logger(
-    "demo_logger", "/data/model-data/logs", "prediction_v1.log", log_level=logging.DEBUG
+    "demo_logger",
+    "/data/model-data/logs",
+    "prediction_feb25.log",
+    log_level=logging.DEBUG,
 ).get_logger()
 
 
