@@ -25,9 +25,7 @@ def test_get_prediction_empty_data(mock_model_manager):
 
 def test_get_prediction_valid_data(mock_model_manager, mock_data):
     # Mock the prediction pipeline to return valid data
-    with patch(
-        "scout_ml_package.model.model_pipeline.PredictionPipeline"
-    ) as mock_pipeline:
+    with patch("scout_ml_package.model.model_pipeline.PredictionPipeline") as mock_pipeline:
         mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             100,
@@ -41,9 +39,7 @@ def test_get_prediction_valid_data(mock_model_manager, mock_data):
 
 def test_get_prediction_ramcount_validation_failure(mock_model_manager, mock_data):
     # Mock the prediction pipeline to return invalid RAMCOUNT
-    with patch(
-        "scout_ml_package.model.model_pipeline.PredictionPipeline"
-    ) as mock_pipeline:
+    with patch("scout_ml_package.model.model_pipeline.PredictionPipeline") as mock_pipeline:
         mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             0,
@@ -57,9 +53,7 @@ def test_get_prediction_ramcount_validation_failure(mock_model_manager, mock_dat
 
 def test_get_prediction_ctime_validation_failure(mock_model_manager, mock_data):
     # Mock the prediction pipeline to return invalid CTIME
-    with patch(
-        "scout_ml_package.model.model_pipeline.PredictionPipeline"
-    ) as mock_pipeline:
+    with patch("scout_ml_package.model.model_pipeline.PredictionPipeline") as mock_pipeline:
         mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             100,
@@ -73,9 +67,7 @@ def test_get_prediction_ctime_validation_failure(mock_model_manager, mock_data):
 
 def test_get_prediction_cpu_eff_validation_failure(mock_model_manager, mock_data):
     # Mock the prediction pipeline to return invalid CPU_EFF
-    with patch(
-        "scout_ml_package.model.model_pipeline.PredictionPipeline"
-    ) as mock_pipeline:
+    with patch("scout_ml_package.model.model_pipeline.PredictionPipeline") as mock_pipeline:
         mock_pipeline.return_value.transform_features.return_value = mock_data
         mock_pipeline.return_value.make_predictions_for_model.side_effect = [
             100,
@@ -89,12 +81,8 @@ def test_get_prediction_cpu_eff_validation_failure(mock_model_manager, mock_data
 
 def test_get_prediction_exception(mock_model_manager, mock_data):
     # Mock an exception during prediction
-    with patch(
-        "scout_ml_package.model.model_pipeline.PredictionPipeline"
-    ) as mock_pipeline:
-        mock_pipeline.return_value.make_predictions_for_model.side_effect = Exception(
-            "Mocked exception"
-        )
+    with patch("scout_ml_package.model.model_pipeline.PredictionPipeline") as mock_pipeline:
+        mock_pipeline.return_value.make_predictions_for_model.side_effect = Exception("Mocked exception")
 
         result = get_prediction(mock_model_manager, mock_data)
         assert isinstance(result, str) and "failure" in result

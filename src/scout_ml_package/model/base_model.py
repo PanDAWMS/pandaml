@@ -1,4 +1,5 @@
 # # src/scout_ml_package/model/base_model.py
+# To be updated later
 import os
 from typing import Callable, List, Optional, Tuple, Union
 
@@ -76,12 +77,8 @@ class MultiOutputModel:
         """Build and compile the model for CPU time prediction."""
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
-        x = self._add_conv_block(
-            x, filters=128, kernel_size=7, activation="relu", pool_size=2
-        )
-        x = self._add_conv_block(
-            x, filters=32, kernel_size=3, activation="relu", pool_size=2
-        )
+        x = self._add_conv_block(x, filters=128, kernel_size=7, activation="relu", pool_size=2)
+        x = self._add_conv_block(x, filters=32, kernel_size=3, activation="relu", pool_size=2)
         x = Flatten()(x)
         x = self._add_dense_block(x, units=512, dropout_rate=0.5, activation="relu")
         x = self._add_dense_block(x, units=256, dropout_rate=0.4, activation="relu")
@@ -104,9 +101,7 @@ class MultiOutputModel:
         """Build and compile the model for CPU time prediction."""
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
-        x = self._add_conv_block(
-            x, filters=128, kernel_size=3, activation="relu", pool_size=2
-        )
+        x = self._add_conv_block(x, filters=128, kernel_size=3, activation="relu", pool_size=2)
         x = Flatten()(x)
         x = self._add_dense_block(x, units=128, dropout_rate=0.4, activation="swish")
         x = self._add_dense_block(x, units=64, dropout_rate=0.3, activation="relu")
@@ -138,9 +133,7 @@ class MultiOutputModel:
         """Build and compile the model for CPU time prediction."""
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
-        x = self._add_conv_block(
-            x, filters=512, kernel_size=3, activation="swish", pool_size=2
-        )
+        x = self._add_conv_block(x, filters=512, kernel_size=3, activation="swish", pool_size=2)
         x = Flatten()(x)
         x = self._add_dense_block(x, units=512, dropout_rate=0.4, activation="swish")
         x = self._add_dense_block(x, units=256, dropout_rate=0.3, activation="relu")
@@ -162,12 +155,8 @@ class MultiOutputModel:
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
 
-        x = self._add_conv_block(
-            x, filters=512, kernel_size=5, activation="relu", pool_size=2
-        )
-        x = self._add_conv_block(
-            x, filters=128, kernel_size=3, activation="relu", pool_size=2
-        )
+        x = self._add_conv_block(x, filters=512, kernel_size=5, activation="relu", pool_size=2)
+        x = self._add_conv_block(x, filters=128, kernel_size=3, activation="relu", pool_size=2)
 
         x = Flatten()(x)
         x = self._add_dense_block(x, units=512, dropout_rate=0.5, activation="relu")
@@ -188,9 +177,7 @@ class MultiOutputModel:
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
 
-        x = self._add_conv_block(
-            x, filters=256, kernel_size=3, activation="elu", pool_size=2
-        )
+        x = self._add_conv_block(x, filters=256, kernel_size=3, activation="elu", pool_size=2)
         x = Flatten()(x)
         # x = self._add_dense_block(x, units=256, dropout_rate=0.4, activation='elu')
 
@@ -208,12 +195,8 @@ class MultiOutputModel:
     def build_ramcount(self) -> Model:
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
-        x = self._add_conv_block(
-            x, filters=256, kernel_size=3, activation="relu", pool_size=2
-        )
-        x = self._add_conv_block(
-            x, filters=128, kernel_size=5, activation="relu", pool_size=2
-        )
+        x = self._add_conv_block(x, filters=256, kernel_size=3, activation="relu", pool_size=2)
+        x = self._add_conv_block(x, filters=128, kernel_size=5, activation="relu", pool_size=2)
         x = Flatten()(x)
         x = self._add_dense_block(x, units=256, dropout_rate=0.5, activation="relu")
         x = self._add_dense_block(x, units=128, dropout_rate=0.3, activation="relu")
@@ -229,20 +212,14 @@ class MultiOutputModel:
 
     def custom_loss_cpu_eff(self, y_true, y_pred):
         mse = tf.keras.losses.mean_squared_error(y_true, y_pred)
-        range_penalty = tf.reduce_mean(
-            tf.maximum(0.0, 1.0 - y_pred) + tf.maximum(0.0, y_pred - 99.0)
-        )
+        range_penalty = tf.reduce_mean(tf.maximum(0.0, 1.0 - y_pred) + tf.maximum(0.0, y_pred - 99.0))
         return mse + 10.0 * range_penalty
 
     def build_cpu_eff(self) -> Model:
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
-        x = self._add_conv_block(
-            x, filters=256, kernel_size=3, activation="relu", pool_size=2
-        )
-        x = self._add_conv_block(
-            x, filters=128, kernel_size=3, activation="relu", pool_size=2
-        )
+        x = self._add_conv_block(x, filters=256, kernel_size=3, activation="relu", pool_size=2)
+        x = self._add_conv_block(x, filters=128, kernel_size=3, activation="relu", pool_size=2)
         x = Flatten()(x)
         x = self._add_dense_block(x, units=512, dropout_rate=0.4, activation="relu")
         x = self._add_dense_block(x, units=256, dropout_rate=0.3, activation="relu")
@@ -320,9 +297,7 @@ class MultiOutputModel:
         loss_functions = {
             "mse": tf.keras.losses.MeanSquaredError(),
             "mae": tf.keras.losses.MeanAbsoluteError(),
-            "rmse": lambda y_true, y_pred: tf.sqrt(
-                tf.reduce_mean(tf.square(y_true - y_pred))
-            ),
+            "rmse": lambda y_true, y_pred: tf.sqrt(tf.reduce_mean(tf.square(y_true - y_pred))),
             "huber": tf.keras.losses.Huber(delta=7.0),
             "categorical_crossentropy": tf.keras.losses.CategoricalCrossentropy(),
             "binary_crossentropy": tf.keras.losses.BinaryCrossentropy(),
@@ -355,9 +330,7 @@ class ModelTrainer:
             *args: Additional positional arguments for the model class.
             **kwargs: Additional keyword arguments for the model class.
         """
-        self.model_instance = model_class(
-            input_shape, loss_function=loss_function, *args, **kwargs
-        )
+        self.model_instance = model_class(input_shape, loss_function=loss_function, *args, **kwargs)
         self.loss_function = loss_function
         self.metrics = metrics or []
         self.history = None
@@ -391,9 +364,7 @@ class ModelTrainer:
         """
         build_function_name = build_function_name or self.build_function
         strategy = (
-            tf.distribute.MirroredStrategy()
-            if tf.config.list_physical_devices("GPU")
-            else tf.distribute.get_strategy()
+            tf.distribute.MirroredStrategy() if tf.config.list_physical_devices("GPU") else tf.distribute.get_strategy()
         )
 
         with strategy.scope():
@@ -404,12 +375,8 @@ class ModelTrainer:
                 metrics=self.metrics,
             )
 
-        early_stopping = EarlyStopping(
-            monitor="val_loss", patience=10, restore_best_weights=True
-        )
-        reduce_lr = ReduceLROnPlateau(
-            monitor="val_loss", factor=0.4, patience=5, min_lr=1e-6
-        )
+        early_stopping = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
+        reduce_lr = ReduceLROnPlateau(monitor="val_loss", factor=0.4, patience=5, min_lr=1e-6)
         self.history = model.fit(
             X_train,
             y_train,
@@ -524,19 +491,15 @@ class ModelPipeline:
         self.category_list = category_list
 
         training_preprocessor = TrainingDataPreprocessor()
-        self.processed_train_data, self.encoded_columns, self.fitted_scaler = (
-            training_preprocessor.preprocess(
-                self.train_df,
-                self.numerical_features,
-                self.categorical_features,
-                self.category_list,
-            )
+        self.processed_train_data, self.encoded_columns, self.fitted_scaler = training_preprocessor.preprocess(
+            self.train_df,
+            self.numerical_features,
+            self.categorical_features,
+            self.category_list,
         )
 
         # After processing data, print the shape of X_train
-        X_train = self.processed_train_data[
-            self.encoded_columns + self.numerical_features
-        ]
+        X_train = self.processed_train_data[self.encoded_columns + self.numerical_features]
         self.print_X_train_shape(X_train)
 
     def preprocess_new_data(self, test_df, future_data):

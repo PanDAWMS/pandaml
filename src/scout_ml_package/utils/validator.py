@@ -34,9 +34,7 @@ class FakeListener:
         Raises:
         - TypeError: If task_ids is not a list or if delay is not an integer.
         """
-        if not isinstance(task_ids, list) or not all(
-            isinstance(task_id, int) for task_id in task_ids
-        ):
+        if not isinstance(task_ids, list) or not all(isinstance(task_id, int) for task_id in task_ids):
             raise TypeError("task_ids must be a list of integers")
         if not isinstance(delay, int):
             raise TypeError("delay must be an integer")
@@ -85,9 +83,7 @@ class DataValidator:
     }
 
     @classmethod
-    def check_predictions(
-        cls, df: pd.DataFrame, column: str, acceptable_ranges: dict
-    ) -> bool:
+    def check_predictions(cls, df: pd.DataFrame, column: str, acceptable_ranges: dict) -> bool:
         """
         Checks if predictions are within acceptable ranges.
 
@@ -110,9 +106,7 @@ class DataValidator:
         return True
 
     @classmethod
-    def validate_prediction(
-        cls, df: pd.DataFrame, column: str, acceptable_ranges: dict, jeditaskid: int
-    ) -> bool:
+    def validate_prediction(cls, df: pd.DataFrame, column: str, acceptable_ranges: dict, jeditaskid: int) -> bool:
         """
         Validates predictions for a given column and logs the result.
 
@@ -133,15 +127,11 @@ class DataValidator:
             logger.error(f"{column} validation failed for JEDITASKID {jeditaskid}: {ve}")
             return False
         except Exception as e:
-            logger.error(
-                f"Unexpected error during {column} validation for JEDITASKID {jeditaskid}: {e}"
-            )
+            logger.error(f"Unexpected error during {column} validation for JEDITASKID {jeditaskid}: {e}")
             return False
 
     @classmethod
-    def validate_ctime_prediction(
-        cls, df: pd.DataFrame, jeditaskid: int, additional_ctime_ranges: dict
-    ) -> bool:
+    def validate_ctime_prediction(cls, df: pd.DataFrame, jeditaskid: int, additional_ctime_ranges: dict) -> bool:
         """
         Validates CTIME predictions using alternative ranges.
 
@@ -155,15 +145,11 @@ class DataValidator:
         """
         try:
             if df["CPUTIMEUNIT"].values[0] == "mHS06sPerEvent":
-                cls.check_predictions(
-                    df, "CTIME", {"CTIME": additional_ctime_ranges["low"]}
-                )
+                cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["low"]})
                 logger.info("Validation passed with low CTIME range.")
                 return True
             else:
-                cls.check_predictions(
-                    df, "CTIME", {"CTIME": additional_ctime_ranges["high"]}
-                )
+                cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["high"]})
                 logger.info("Validation passed with high CTIME range.")
                 return True
         except ValueError as ve:

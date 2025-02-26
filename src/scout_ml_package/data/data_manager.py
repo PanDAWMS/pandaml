@@ -29,9 +29,7 @@ class HistoricalDataProcessor:
         - FileNotFoundError: If either of the specified files does not exist.
         """
         self.task_data = pd.read_parquet(task_data_path)
-        self.additional_data = (
-            pd.read_parquet(additional_data_path) if additional_data_path else None
-        )
+        self.additional_data = pd.read_parquet(additional_data_path) if additional_data_path else None
         self.merged_data = None
 
     def filtered_data(self) -> pd.DataFrame:
@@ -50,16 +48,10 @@ class HistoricalDataProcessor:
 
         # Extract process head and tags from task names
         self.task_data["Process_Head"] = (
-            self.task_data["TASKNAME"]
-            .str.split(".")
-            .str[2]
-            .str.replace(r"[_\.]", " ", regex=True)
+            self.task_data["TASKNAME"].str.split(".").str[2].str.replace(r"[_\.]", " ", regex=True)
         )
         self.task_data["Tags"] = (
-            self.task_data["TASKNAME"]
-            .str.split(".")
-            .str[-1]
-            .str.replace(r"[_\.]", " ", regex=True)
+            self.task_data["TASKNAME"].str.split(".").str[-1].str.replace(r"[_\.]", " ", regex=True)
         )
 
         # Merge task data with additional data
@@ -77,9 +69,7 @@ class HistoricalDataProcessor:
         )
 
         # Classify IO intensity
-        self.merged_data["IOIntensity"] = self.merged_data["IOINTENSITY"].apply(
-            lambda x: "low" if x < 500 else "high"
-        )
+        self.merged_data["IOIntensity"] = self.merged_data["IOINTENSITY"].apply(lambda x: "low" if x < 500 else "high")
 
         # Apply filters
         filtered_data = self.merged_data[
@@ -123,9 +113,7 @@ class DataSplitter:
         self.merged_data = filtered_data
         self.selected_columns = selected_columns
 
-    def split_data(
-        self, test_size: float = 0.30, random_state: int = 42
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def split_data(self, test_size: float = 0.30, random_state: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Splits the processed data into training and testing datasets.
 
@@ -140,9 +128,7 @@ class DataSplitter:
         - ValueError: If data has not been processed or 'JEDITASKID' is not in selected columns.
         """
         if self.merged_data is None or self.merged_data.empty:
-            raise ValueError(
-                "Data has not been processed yet. Please provide valid processed data."
-            )
+            raise ValueError("Data has not been processed yet. Please provide valid processed data.")
 
         if "JEDITASKID" not in self.selected_columns:
             raise ValueError("The selected columns must include 'JEDITASKID'.")
@@ -207,12 +193,8 @@ class ModelTrainingInput:
         - ValueError: If any feature or target column does not exist in the DataFrame.
         """
         # Check if all feature and target columns exist in the DataFrame
-        if not all(
-            col in self.df_train.columns for col in self.features + self.target_cols
-        ):
-            raise ValueError(
-                "All feature and target columns must exist in the DataFrame."
-            )
+        if not all(col in self.df_train.columns for col in self.features + self.target_cols):
+            raise ValueError("All feature and target columns must exist in the DataFrame.")
 
         X_train = self.df_train[self.features]
         y_train = self.df_train[self.target_cols]
@@ -280,9 +262,7 @@ class CategoricalEncoder:
         encoder = OneHotEncoder(categories=category_list, sparse_output=False)
         encoded_features = encoder.fit_transform(df[columns_to_encode])
         encoded_feature_names = encoder.get_feature_names_out(columns_to_encode)
-        encoded_df = pd.DataFrame(
-            encoded_features, columns=encoded_feature_names, index=df.index
-        )
+        encoded_df = pd.DataFrame(encoded_features, columns=encoded_feature_names, index=df.index)
         encoded_df = pd.concat([df, encoded_df], axis=1)
         return encoded_df, encoded_feature_names.tolist()
 
@@ -301,9 +281,7 @@ class BaseDataPreprocessor:
         """
         self.scaler = MinMaxScaler()
 
-    def _fit_and_transform(
-        self, df: pd.DataFrame, numerical_features: List[str]
-    ) -> pd.DataFrame:
+    def _fit_and_transform(self, df: pd.DataFrame, numerical_features: List[str]) -> pd.DataFrame:
         """
         Fits and transforms numerical features using the scaler.
 
@@ -346,9 +324,7 @@ class BaseDataPreprocessor:
         """
         if not isinstance(df, pd.DataFrame):
             raise TypeError("df must be a pandas DataFrame")
-        if not isinstance(categorical_features, list) or not isinstance(
-            category_list, list
-        ):
+        if not isinstance(categorical_features, list) or not isinstance(category_list, list):
             raise TypeError("categorical_features and category_list must be lists")
 
         return CategoricalEncoder.one_hot_encode(df, categorical_features, category_list)
@@ -391,14 +367,10 @@ class TrainingDataPreprocessor(BaseDataPreprocessor):
             or not isinstance(categorical_features, list)
             or not isinstance(category_list, list)
         ):
-            raise TypeError(
-                "numerical_features, categorical_features, and category_list must be lists"
-            )
+            raise TypeError("numerical_features, categorical_features, and category_list must be lists")
 
         df = self._fit_and_transform(df, numerical_features)
-        df, encoded_columns = self._encode_features(
-            df, categorical_features, category_list
-        )
+        df, encoded_columns = self._encode_features(df, categorical_features, category_list)
         return df, encoded_columns, self.scaler
 
 
@@ -495,13 +467,9 @@ class LiveDataPreprocessor(BaseDataPreprocessor):
             or not isinstance(categorical_features, list)
             or not isinstance(category_list, list)
         ):
-            raise TypeError(
-                "numerical_features, categorical_features, and category_list must be lists"
-            )
+            raise TypeError("numerical_features, categorical_features, and category_list must be lists")
 
         live_data = live_data.copy()
         live_data[numerical_features] = scaler.transform(live_data[numerical_features])
-        live_data, encoded_columns = self._encode_features(
-            live_data, categorical_features, category_list
-        )
+        live_data, encoded_columns = self._encode_features(live_data, categorical_features, category_list)
         return live_data[encoded_columns + numerical_features], encoded_columns

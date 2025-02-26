@@ -9,9 +9,7 @@ import stomp
 
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 class ConfigLoader:
@@ -59,12 +57,8 @@ class ConfigLoader:
         self.mb_server_host_port = (config["LPORT"]["host"], int(config["LPORT"]["port"]))
         self.queue_name = config["LPORT"]["queue_name"]
         self.vhost = config["LPORT"]["vhost"]
-        self.username = os.environ.get(
-            "STOMP_USERNAME", config["credentials"]["username"]
-        )
-        self.passcode = os.environ.get(
-            "STOMP_PASSWORD", config["credentials"]["passcode"]
-        )
+        self.username = os.environ.get("STOMP_USERNAME", config["credentials"]["username"])
+        self.passcode = os.environ.get("STOMP_PASSWORD", config["credentials"]["passcode"])
 
 
 class MyListener(stomp.ConnectionListener):
@@ -138,11 +132,7 @@ class MyListener(stomp.ConnectionListener):
         try:
             msg = json.loads(frame.body)
             now_ts = time.time()
-            if (
-                msg["msg_type"] == "task_status"
-                and msg["status"] == "defined"
-                and now_ts - msg["timestamp"] <= 600
-            ):
+            if msg["msg_type"] == "task_status" and msg["status"] == "defined" and now_ts - msg["timestamp"] <= 600:
                 task_id = msg["taskid"]
                 logging.info(f"Received task ID: {task_id}")
                 self.task_id_queue.put(task_id)
@@ -160,9 +150,7 @@ class MyListener(stomp.ConnectionListener):
         retries = 0
         while retries < max_retries:
             try:
-                self.conn = stomp.Connection12(
-                    [self.mb_server_host_port], vhost=self.vhost
-                )
+                self.conn = stomp.Connection12([self.mb_server_host_port], vhost=self.vhost)
                 self.conn.set_listener("", self)
                 self.conn.connect(self.username, self.passcode, wait=True)
                 logging.info("Connected to STOMP server")

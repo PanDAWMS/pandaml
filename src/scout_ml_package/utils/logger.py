@@ -29,9 +29,7 @@ class Logger:
         - log_level (int): Logging level for the file handler. Defaults to DEBUG.
         - console_level (int): Logging level for the console handler. Defaults to INFO.
         """
-        self.logger = self.configure_logger(
-            logger_name, log_dir_path, log_file_name, log_level, console_level
-        )
+        self.logger = self.configure_logger(logger_name, log_dir_path, log_file_name, log_level, console_level)
 
     @staticmethod
     def configure_logger(
@@ -70,9 +68,7 @@ class Logger:
             logger.handlers.clear()
 
         # Create a formatter
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         # Create a file handler
         file_handler = logging.FileHandler(log_file_path)

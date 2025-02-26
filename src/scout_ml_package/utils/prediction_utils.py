@@ -54,9 +54,7 @@ class PredictionUtils:
                 task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
                 if task_id is not None:
                     # logger.info(f"Processing task ID: {task_id}")
-                    self.process_single_task(
-                        task_id, input_db, output_db, model_manager, cols_to_write
-                    )
+                    self.process_single_task(task_id, input_db, output_db, model_manager, cols_to_write)
                 else:
                     # print("No task ID received.")
                     self.logger.info("No task ID received.")
@@ -116,13 +114,9 @@ class PredictionUtils:
             )
             self.logger.info(f"Error logged successfully for JEDITASKID: {task_id}")
         except Exception as e:
-            self.logger.exception(
-                f"Failed to handle error for JEDITASKID: {task_id}: {e}"
-            )
+            self.logger.exception(f"Failed to handle error for JEDITASKID: {task_id}: {e}")
 
-    def get_prediction(
-        self, model_manager: ModelManager, r: pd.DataFrame, task_id: int
-    ) -> pd.DataFrame:
+    def get_prediction(self, model_manager: ModelManager, r: pd.DataFrame, task_id: int) -> pd.DataFrame:
         """
         Generates predictions for a task using multiple models.
 
@@ -152,9 +146,7 @@ class PredictionUtils:
             self.logger.info("Models re-loaded successfully.")
 
         if r is None or r.empty:
-            self.logger.error(
-                f"DataFrame is empty or input data is None for task ID {task_id}."
-            )
+            self.logger.error(f"DataFrame is empty or input data is None for task ID {task_id}.")
             return None
 
         jeditaskid = r["JEDITASKID"].values[0]
@@ -162,39 +154,25 @@ class PredictionUtils:
         base_df = ColumnTransformer().transform_features(r)
 
         # Model 1: RAMCOUNT
-        features = (
-            ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
-        )
-        base_df.loc[:, "RAMCOUNT"] = processor.make_predictions_for_model(
-            "1", features, base_df
-        )
+        features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
+        base_df.loc[:, "RAMCOUNT"] = processor.make_predictions_for_model("1", features, base_df)
 
-        if not DataValidator.validate_prediction(
-            base_df, "RAMCOUNT", DataValidator.acceptable_ranges, jeditaskid
-        ):
+        if not DataValidator.validate_prediction(base_df, "RAMCOUNT", DataValidator.acceptable_ranges, jeditaskid):
             self.logger.error(f"RAMCOUNT validation failed for JEDITASKID {jeditaskid}.")
             return "M1 failure."
 
         # Update features for subsequent models
         processor.numerical_features.append("RAMCOUNT")
-        features = (
-            ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
-        )
+        features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
 
         # Model 2/3: CTIME
         try:
             if base_df["CPUTIMEUNIT"].values[0] == "mHS06sPerEvent":
-                base_df.loc[:, "CTIME"] = processor.make_predictions_for_model(
-                    "2", features, base_df
-                )
+                base_df.loc[:, "CTIME"] = processor.make_predictions_for_model("2", features, base_df)
             else:
-                base_df.loc[:, "CTIME"] = processor.make_predictions_for_model(
-                    "3", features, base_df
-                )
+                base_df.loc[:, "CTIME"] = processor.make_predictions_for_model("3", features, base_df)
 
-            if not DataValidator.validate_ctime_prediction(
-                base_df, jeditaskid, DataValidator.additional_ctime_ranges
-            ):
+            if not DataValidator.validate_ctime_prediction(base_df, jeditaskid, DataValidator.additional_ctime_ranges):
                 self.logger.error(f"CTIME validation failed for JEDITASKID {jeditaskid}.")
                 cpu_unit = base_df["CPUTIMEUNIT"].values[0]
                 if cpu_unit == "mHS06sPerEvent":
@@ -202,9 +180,7 @@ class PredictionUtils:
                 else:
                     return "M3 failure"
         except Exception as e:
-            self.logger.error(
-                f"CTIME prediction failed for JEDITASKID {jeditaskid}: {str(e)}"
-            )
+            self.logger.error(f"CTIME prediction failed for JEDITASKID {jeditaskid}: {str(e)}")
             cpu_unit = base_df["CPUTIMEUNIT"].values[0]
             if cpu_unit == "mHS06sPerEvent":
                 return f"{jeditaskid}M2 failure: {str(e)}"
@@ -213,21 +189,13 @@ class PredictionUtils:
 
         # Update features for subsequent models
         processor.numerical_features.append("CTIME")
-        features = (
-            ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
-        )
+        features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
 
         # Model 4: CPU_EFF
         try:
-            base_df.loc[:, "CPU_EFF"] = processor.make_predictions_for_model(
-                "4", features, base_df
-            )
-            if not DataValidator.validate_prediction(
-                base_df, "CPU_EFF", DataValidator.acceptable_ranges, jeditaskid
-            ):
-                self.logger.error(
-                    f"CPU_EFF validation failed for JEDITASKID {jeditaskid}."
-                )
+            base_df.loc[:, "CPU_EFF"] = processor.make_predictions_for_model("4", features, base_df)
+            if not DataValidator.validate_prediction(base_df, "CPU_EFF", DataValidator.acceptable_ranges, jeditaskid):
+                self.logger.error(f"CPU_EFF validation failed for JEDITASKID {jeditaskid}.")
                 return f"{jeditaskid} M4 failure: Validation failed."
         except Exception as e:
             self.logger.error(f"{jeditaskid} M4 failure: {str(e)}")
@@ -235,25 +203,17 @@ class PredictionUtils:
 
         # Update features for subsequent models
         processor.numerical_features.append("CPU_EFF")
-        features = (
-            ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
-        )
+        features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
 
         # Model 5: IOINTENSITY
         try:
-            base_df.loc[:, "IOINTENSITY"] = processor.make_predictions_for_model(
-                "5", features, base_df
-            )
+            base_df.loc[:, "IOINTENSITY"] = processor.make_predictions_for_model("5", features, base_df)
         except Exception as e:
             self.logger.error(f"{jeditaskid}M5 failure: {str(e)}")
             return f"M5 failure: {str(e)}"
 
-        self.logger.info(
-            f"JEDITASKID {jeditaskid} processed successfully in {time.time() - start_time:.2f} seconds"
-        )
-        base_df[["RAMCOUNT", "CTIME", "CPU_EFF"]] = base_df[
-            ["RAMCOUNT", "CTIME", "CPU_EFF"]
-        ].round(3)
+        self.logger.info(f"JEDITASKID {jeditaskid} processed successfully in {time.time() - start_time:.2f} seconds")
+        base_df[["RAMCOUNT", "CTIME", "CPU_EFF"]] = base_df[["RAMCOUNT", "CTIME", "CPU_EFF"]].round(3)
         return base_df
 
     def process_single_task(
@@ -290,16 +250,12 @@ class PredictionUtils:
             # Fetch task parameters
             r = input_db.fetch_task_param(task_id)
             if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
-                self.logger.info(
-                    f"Task parameters fetched successfully for JEDITASKID: {task_id}"
-                )
+                self.logger.info(f"Task parameters fetched successfully for JEDITASKID: {task_id}")
                 # Generate prediction
                 try:
                     result = self.get_prediction(model_manager, r, task_id)
                     if isinstance(result, pd.DataFrame):
-                        self.logger.info(
-                            f"Prediction completed successfully for JEDITASKID: {task_id}"
-                        )
+                        self.logger.info(f"Prediction completed successfully for JEDITASKID: {task_id}")
                         submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         # Process and write results to the output database
                         result = result[cols_to_write].copy()
@@ -326,30 +282,20 @@ class PredictionUtils:
                             "submission_time": submission_date,
                         }
                         self.logger.info(f"Failure message: {message}")
-                        raise ValueError(
-                            f"Prediction failed for JEDITASKID: {task_id}. Result: {result}"
-                        )
+                        raise ValueError(f"Prediction failed for JEDITASKID: {task_id}. Result: {result}")
 
                 except Exception as e:
                     if hasattr(e, "args") and "DPY-1001" in e.args[0].message:
-                        self.logger.error(
-                            f"Database connection error: {e}. Exiting to trigger service restart."
-                        )
+                        self.logger.error(f"Database connection error: {e}. Exiting to trigger service restart.")
                         sys.exit(1)  # Exit with a non-zero status to trigger restart
                     else:
-                        self.logger.error(
-                            f"Oracle interface error for JEDITASKID: {task_id}: {e}"
-                        )
-                        self.handle_error(
-                            task_id, r, str(e), cols_to_write, submission_date, output_db
-                        )
+                        self.logger.error(f"Oracle interface error for JEDITASKID: {task_id}: {e}")
+                        self.handle_error(task_id, r, str(e), cols_to_write, submission_date, output_db)
                         # Consider raising the exception here to ensure the script exits
 
             else:
                 # Handle invalid or empty DataFrame `r`
-                error_message = (
-                    f"Invalid or empty DataFrame fetched for JEDITASKID: {task_id}"
-                )
+                error_message = f"Invalid or empty DataFrame fetched for JEDITASKID: {task_id}"
                 self.logger.error(error_message)
                 self.handle_error(
                     task_id,

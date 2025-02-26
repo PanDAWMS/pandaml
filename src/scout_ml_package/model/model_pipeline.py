@@ -69,9 +69,7 @@ class TrainingPipeline:
         self.category_list = category_list
         self.model_target = model_target
 
-    def preprocess_data(
-        self, train_df: pd.DataFrame, test_df: pd.DataFrame, future_data: pd.DataFrame
-    ) -> Tuple[
+    def preprocess_data(self, train_df: pd.DataFrame, test_df: pd.DataFrame, future_data: pd.DataFrame) -> Tuple[
         pd.DataFrame,
         pd.DataFrame,
         pd.DataFrame,
@@ -100,13 +98,11 @@ class TrainingPipeline:
             raise TypeError("All data must be pandas DataFrames")
 
         training_preprocessor = TrainingDataPreprocessor()
-        processed_train_data, encoded_columns, fitted_scaler = (
-            training_preprocessor.preprocess(
-                train_df,
-                self.numerical_features,
-                self.categorical_features,
-                self.category_list,
-            )
+        processed_train_data, encoded_columns, fitted_scaler = training_preprocessor.preprocess(
+            train_df,
+            self.numerical_features,
+            self.categorical_features,
+            self.category_list,
         )
 
         new_data_preprocessor = NewDataPreprocessor()
@@ -163,16 +159,10 @@ class TrainingPipeline:
         Raises:
         - TypeError: If any of the parameters are not of the correct type.
         """
-        if not isinstance(processed_train_data, pd.DataFrame) or not isinstance(
-            processed_test_data, pd.DataFrame
-        ):
+        if not isinstance(processed_train_data, pd.DataFrame) or not isinstance(processed_test_data, pd.DataFrame):
             raise TypeError("Data must be pandas DataFrames")
-        if not isinstance(features_to_train, list) or not isinstance(
-            build_function_name, str
-        ):
-            raise TypeError(
-                "features_to_train must be a list and build_function_name must be a string"
-            )
+        if not isinstance(features_to_train, list) or not isinstance(build_function_name, str):
+            raise TypeError("features_to_train must be a list and build_function_name must be a string")
         if not isinstance(epoch, int) or not isinstance(batch, int):
             raise TypeError("epoch and batch must be integers")
 
@@ -238,16 +228,10 @@ class TrainingPipeline:
         Raises:
         - TypeError: If any of the parameters are not of the correct type.
         """
-        if not isinstance(processed_train_data, pd.DataFrame) or not isinstance(
-            processed_test_data, pd.DataFrame
-        ):
+        if not isinstance(processed_train_data, pd.DataFrame) or not isinstance(processed_test_data, pd.DataFrame):
             raise TypeError("Data must be pandas DataFrames")
-        if not isinstance(features_to_train, list) or not isinstance(
-            build_function_name, str
-        ):
-            raise TypeError(
-                "features_to_train must be a list and build_function_name must be a string"
-            )
+        if not isinstance(features_to_train, list) or not isinstance(build_function_name, str):
+            raise TypeError("features_to_train must be a list and build_function_name must be a string")
         if not isinstance(epoch, int) or not isinstance(batch, int):
             raise TypeError("epoch and batch must be integers")
         if not isinstance(model_type, str):
@@ -268,9 +252,7 @@ class TrainingPipeline:
             loss_function = "binary_crossentropy"
             metrics = [tf.keras.metrics.BinaryAccuracy()]
         else:  # assume 'multiclass'
-            output_shape = len(
-                y_train.unique()
-            )  # for one-hot encoded classes, check y_train.shape[1]
+            output_shape = len(y_train.unique())  # for one-hot encoded classes, check y_train.shape[1]
             loss_function = "categorical_crossentropy"
             metrics = [tf.keras.metrics.CategoricalAccuracy()]
 
@@ -285,9 +267,7 @@ class TrainingPipeline:
             build_function=build_function_name,
         )
 
-        model, history = trainer.train(
-            X_train, y_train, X_val, y_val, epochs=epoch, batch_size=batch
-        )
+        model, history = trainer.train(X_train, y_train, X_val, y_val, epochs=epoch, batch_size=batch)
         return model
 
     def regression_prediction(
@@ -375,24 +355,16 @@ class TrainingPipeline:
         y_pred = trained_model.predict(X_test)
 
         # Convert numerical predictions back to 'low' or 'high'
-        y_pred_text = np.where(
-            y_pred > 0.5, "high", "low"
-        )  # Assuming binary classification
+        y_pred_text = np.where(y_pred > 0.5, "high", "low")  # Assuming binary classification
 
         # Create predictions DataFrame
         pred_names = [f"Predicted_{element}" for element in self.model_target]
         predicted_df = processed_future_data.copy()
-        predicted_df[self.model_target] = (
-            y_test  # Keep actual values (which are already 0 or 1)
-        )
-        predicted_df[pred_names] = (
-            y_pred_text  # Store predicted values as 'low' or 'high'
-        )
+        predicted_df[self.model_target] = y_test  # Keep actual values (which are already 0 or 1)
+        predicted_df[pred_names] = y_pred_text  # Store predicted values as 'low' or 'high'
 
         # Convert actual values back to 'low' or 'high' for consistency
-        predicted_df[self.model_target] = predicted_df[self.model_target].replace(
-            {0: "low", 1: "high"}
-        )
+        predicted_df[self.model_target] = predicted_df[self.model_target].replace({0: "low", 1: "high"})
         return predicted_df, y_pred_text
 
 
@@ -470,9 +442,7 @@ class ColumnTransformer:
 
         return "S" if corecount == 1 else "M"
 
-    def transform_features(
-        self, df: pd.DataFrame, selected_columns: Optional[List[str]] = None
-    ) -> pd.DataFrame:
+    def transform_features(self, df: pd.DataFrame, selected_columns: Optional[List[str]] = None) -> pd.DataFrame:
         """
         Applies transformations to the input DataFrame.
 
@@ -545,9 +515,7 @@ class ModelHandlerInProd:
             # Ensure base_path is absolute; default to current working directory if not provided
             if base_path is None:
                 base_path = os.getcwd()
-            model_storage_path = os.path.abspath(
-                os.path.join(base_path, f"ModelStorage/model{self.model_sequence}/")
-            )
+            model_storage_path = os.path.abspath(os.path.join(base_path, f"ModelStorage/model{self.model_sequence}/"))
 
             # Load scaler and model
             self.scaler = joblib.load(os.path.join(model_storage_path, "scaler.pkl"))
@@ -590,9 +558,7 @@ class ModelHandlerInProd:
             or not isinstance(category_sequence, list)
             or not isinstance(unique_elements_categories, list)
         ):
-            raise TypeError(
-                "numerical_features, category_sequence, and unique_elements_categories must be lists"
-            )
+            raise TypeError("numerical_features, category_sequence, and unique_elements_categories must be lists")
 
         required_columns = numerical_features + category_sequence
         missing_columns = [col for col in required_columns if col not in df.columns]
@@ -612,9 +578,7 @@ class ModelHandlerInProd:
         features_to_train = encoded_columns + numerical_features
         return processed_df, features_to_train
 
-    def make_predictions(
-        self, df: pd.DataFrame, features_to_train: List[str]
-    ) -> np.ndarray:
+    def make_predictions(self, df: pd.DataFrame, features_to_train: List[str]) -> np.ndarray:
         """
         Makes predictions using the loaded model.
 
@@ -635,9 +599,7 @@ class ModelHandlerInProd:
 
         predictions = self.model(df[features_to_train])
         # Extract the tensor from the predictions dictionary
-        predicted_tensor = predictions[
-            "output_0"
-        ]  # Adjust the key based on actual output
+        predicted_tensor = predictions["output_0"]  # Adjust the key based on actual output
         predicted_values = predicted_tensor.numpy()  # Convert tensor to NumPy array
 
         # Check if this is a classification model (model 5)
@@ -705,9 +667,7 @@ class ModelManager:
         ]
         for sequence, target_name in model_configs:
             try:
-                model = ModelHandlerInProd(
-                    model_sequence=sequence, target_name=target_name
-                )
+                model = ModelHandlerInProd(model_sequence=sequence, target_name=target_name)
                 model.load_model_and_scaler(self.base_path)
                 self.models[sequence] = model
             except Exception as e:

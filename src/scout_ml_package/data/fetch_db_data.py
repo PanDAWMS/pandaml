@@ -150,9 +150,7 @@ class DatabaseFetcher:
         df = pd.read_sql(query, con=self.conn)
         return df
 
-    def write_data(
-        self, data: pd.DataFrame, table_name: str, max_retries: int = 3
-    ) -> None:
+    def write_data(self, data: pd.DataFrame, table_name: str, max_retries: int = 3) -> None:
         """
         Writes a pandas DataFrame to an Oracle database table with retry mechanism.
 
@@ -168,9 +166,7 @@ class DatabaseFetcher:
             if not self.conn:
                 retries += 1
                 if retries > max_retries:
-                    raise Exception(
-                        f"Failed to connect to the database after {max_retries} retries."
-                    )
+                    raise Exception(f"Failed to connect to the database after {max_retries} retries.")
                 else:
                     print(f"Connection not active. Retrying...")
                     continue
@@ -178,9 +174,7 @@ class DatabaseFetcher:
             try:
                 # Generate SQL placeholders for insertion
                 columns = ", ".join(data.columns)
-                placeholders = ", ".join(
-                    [":" + str(i + 1) for i in range(len(data.columns))]
-                )
+                placeholders = ", ".join([":" + str(i + 1) for i in range(len(data.columns))])
                 sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
 
                 # Convert DataFrame rows to a list of tuples

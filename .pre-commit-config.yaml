@@ -19,7 +19,7 @@ repos:
           - black[jupyter]
         args:
           - --line-length
-          - "90"
+          - "120"
 
   - repo: https://github.com/PyCQA/autoflake
     rev: v2.3.1

@@ -81,9 +81,7 @@ class ErrorMetricsPlotter:
 
         # Calculate Mean Absolute Percentage Error (MAPE)
         mape = (
-            abs((self.actual - self.predicted) / self.actual)
-            .replace([float("inf"), -float("inf")], 0)
-            .fillna(0)
+            abs((self.actual - self.predicted) / self.actual).replace([float("inf"), -float("inf")], 0).fillna(0)
         ).mean() * 100
         return mae, rmse, r2, mape
 
@@ -118,12 +116,7 @@ class ErrorMetricsPlotter:
         plt.ylabel("Predicted Values")
         plt.title("Actual vs Predicted")
 
-        metrics_text = (
-            f"MAE: {mae:.2f}\n"
-            f"RMSE: {rmse:.2f}\n"
-            f"R²: {r2:.2f}\n"
-            f"MAPE: {mape:.2f}%"
-        )
+        metrics_text = f"MAE: {mae:.2f}\n" f"RMSE: {rmse:.2f}\n" f"R²: {r2:.2f}\n" f"MAPE: {mape:.2f}%"
         plt.text(
             0.05,
             0.95,
@@ -253,15 +246,9 @@ class ClassificationMetricsPlotter:
         """
         # Calculate evaluation metrics for classification
         accuracy = accuracy_score(self.actual, self.predicted)
-        precision = precision_score(
-            self.actual, self.predicted, average="weighted"
-        )  # Use 'binary' for binary tasks
-        recall = recall_score(
-            self.actual, self.predicted, average="weighted"
-        )  # Use 'binary' for binary tasks
-        f1 = f1_score(
-            self.actual, self.predicted, average="weighted"
-        )  # Use 'binary' for binary tasks
+        precision = precision_score(self.actual, self.predicted, average="weighted")  # Use 'binary' for binary tasks
+        recall = recall_score(self.actual, self.predicted, average="weighted")  # Use 'binary' for binary tasks
+        f1 = f1_score(self.actual, self.predicted, average="weighted")  # Use 'binary' for binary tasks
 
         # Print the evaluation metrics
         print(f"Metrics for {self.predicted_column} compared to {self.actual_column}:")
