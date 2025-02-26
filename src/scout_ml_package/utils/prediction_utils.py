@@ -265,6 +265,7 @@ class PredictionUtils:
                         # Prepare success message
                         message = {
                             "taskid": result["JEDITASKID"].values[0],
+                            "PRODSOURCELABEL": result["PRODSOURCELABEL"].values[0],
                             "status": "success",
                             "RAMCOUNT": result["RAMCOUNT"].values[0],
                             "CTIME": result["CTIME"].values[0],
