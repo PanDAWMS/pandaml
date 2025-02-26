@@ -11,7 +11,7 @@ from scout_ml_package.data.fetch_db_data import DatabaseFetcher
 from scout_ml_package.model.model_pipeline import (
     ModelManager,
 )
-from scout_ml_package.prediction_utils import PredictionUtils
+from scout_ml_package.utils.prediction_utils import PredictionUtils
 
 from scout_ml_package.utils.logger import Logger
 from scout_ml_package.utils.message import ConfigLoader, MyListener
