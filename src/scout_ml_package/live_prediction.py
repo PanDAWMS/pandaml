@@ -42,9 +42,9 @@ additional_ctime_ranges = {
 
 def fetch_and_process(
     task_id_queue: queue.Queue,
-    input_db: object,
-    output_db: object,
-    model_manager: "ModelManager",
+    input_db: DatabaseFetcher,
+    output_db: DatabaseFetcher,
+    model_manager: ModelManager,
     cols_to_write: List[str],
 ) -> None:
     """
@@ -65,7 +65,7 @@ def fetch_and_process(
     if not isinstance(cols_to_write, list):
         raise TypeError("cols_to_write must be a list")
 
-    print("Task processing thread started")
+    logger.info("Task processing thread started")
     while True:
         try:
             task_id = task_id_queue.get(timeout=0.1)  # Check every 100 ms
@@ -90,7 +90,7 @@ def handle_error(
     error_message: str,
     cols_to_write: List[str],
     submission_date: datetime,
-    output_db: object,
+    output_db: DatabaseFetcher,
 ) -> None:
     """
     Handles errors by logging them and writing error information to the database.
@@ -137,7 +137,7 @@ def handle_error(
 
 
 def get_prediction(
-    model_manager: "ModelManager", r: pd.DataFrame, task_id: int
+    model_manager: ModelManager, r: pd.DataFrame, task_id: int
 ) -> pd.DataFrame:
     """
     Generates predictions for a task using multiple models.
@@ -261,9 +261,9 @@ def get_prediction(
 
 def process_single_task(
     task_id: str,
-    input_db: object,
-    output_db: object,
-    model_manager: "ModelManager",
+    input_db: DatabaseFetcher,
+    output_db: DatabaseFetcher,
+    model_manager: ModelManager,
     cols_to_write: List[str],
 ) -> None:
     """
@@ -387,13 +387,10 @@ if __name__ == "__main__":
     ]
 
     # Load configuration
-    config_path = (
-        "/data/model-data/configs/config.ini"  # Replace with your config file path
-    )
+    config_path = "/data/model-data/configs/config.ini"  # path to config file
     config_loader = ConfigLoader(config_path)
     # Create queues to hold task IDs
     task_id_queue = queue.Queue()
-    # task_queue = queue.Queue()
 
     # Create and start listener
     listener = MyListener(
@@ -406,7 +403,6 @@ if __name__ == "__main__":
     )
 
     # Start thread
-
     fetch_thread = threading.Thread(
         target=fetch_and_process,
         args=(task_id_queue, input_db, output_db, model_manager, cols_to_write),
@@ -422,7 +418,3 @@ if __name__ == "__main__":
             print("Main thread alive", end="\r")
             print_time = time.time()  # Reset the timer
         time.sleep(1)  # Sleep for 1 second
-
-    print("All tasks processed")
-    input_db.close_connection()
-    output_db.close_connection()
