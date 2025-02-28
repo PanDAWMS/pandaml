@@ -159,7 +159,7 @@ class PredictionUtils:
 
         if not DataValidator.validate_prediction(base_df, "RAMCOUNT", DataValidator.acceptable_ranges, jeditaskid):
             self.logger.error(f"RAMCOUNT validation failed for JEDITASKID {jeditaskid}.")
-            return "M1 failure."
+            return "M1 failure"
 
         # Update features for subsequent models
         processor.numerical_features.append("RAMCOUNT")
@@ -248,8 +248,23 @@ class PredictionUtils:
             self.logger.info(f"Processing task ID: {task_id}")
 
             # Fetch task parameters
-            r = input_db.fetch_task_param(task_id)
-            if isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
+            retry_count = 0
+            max_retries = 3
+            task_params_fetched = False
+            while retry_count < max_retries and not task_params_fetched:
+                try:
+                    r = input_db.fetch_task_param(task_id)
+                    task_params_fetched = True
+                except Exception as e:
+                    if hasattr(e, "args") and "DPY-1001" in e.args[0].message:
+                        self.logger.error(f"Database connection error fetching task parameters: {e}. Retrying...")
+                        retry_count += 1
+                        time.sleep(5)  # Wait before retrying
+                    else:
+                        self.logger.error(f"Error fetching task parameters for JEDITASKID: {task_id}: {e}")
+                        raise
+
+            if task_params_fetched and isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
                 self.logger.info(f"Task parameters fetched successfully for JEDITASKID: {task_id}")
                 # Generate prediction
                 try:
@@ -258,22 +273,40 @@ class PredictionUtils:
                         self.logger.info(f"Prediction completed successfully for JEDITASKID: {task_id}")
                         submission_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         # Process and write results to the output database
-                        result = result[cols_to_write].copy()
-                        result["SUBMISSION_DATE"] = datetime.now()
-                        output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
+                        retry_count = 0
+                        write_successful = False
+                        while retry_count < max_retries and not write_successful:
+                            try:
+                                result = result[cols_to_write].copy()
+                                result["SUBMISSION_DATE"] = datetime.now()
+                                output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
+                                write_successful = True
+                            except Exception as e:
+                                if hasattr(e, "args") and "DPY-1001" in e.args[0].message:
+                                    self.logger.error(f"Database connection error writing results: {e}. Retrying...")
+                                    retry_count += 1
+                                    time.sleep(5)  # Wait before retrying
+                                else:
+                                    self.logger.error(f"Error writing results for JEDITASKID: {task_id}: {e}")
+                                    raise
 
-                        # Prepare success message
-                        message = {
-                            "taskid": result["JEDITASKID"].values[0],
-                            "PRODSOURCELABEL": result["PRODSOURCELABEL"].values[0],
-                            "status": "success",
-                            "RAMCOUNT": result["RAMCOUNT"].values[0],
-                            "CTIME": result["CTIME"].values[0],
-                            "CPU_EFF": result["CPU_EFF"].values[0],
-                            "IOINTENSITY": result["IOINTENSITY"].values[0],
-                            "submission_time": submission_date,
-                        }
-                        self.logger.info(f"Success message: {message}")
+                        if write_successful:
+                            # Prepare success message
+                            message = {
+                                "taskid": result["JEDITASKID"].values[0],
+                                "PRODSOURCELABEL": result["PRODSOURCELABEL"].values[0],
+                                "status": "success",
+                                "RAMCOUNT": result["RAMCOUNT"].values[0],
+                                "CTIME": result["CTIME"].values[0],
+                                "CPU_EFF": result["CPU_EFF"].values[0],
+                                "IOINTENSITY": result["IOINTENSITY"].values[0],
+                                "submission_time": submission_date,
+                            }
+                            self.logger.info(f"Success message: {message}")
+
+                        else:
+                            self.logger.error("All retries failed writing results. Exiting.")
+                            sys.exit(1)
 
                     else:
                         # Handle non-DataFrame results as an error
@@ -287,12 +320,14 @@ class PredictionUtils:
 
                 except Exception as e:
                     if hasattr(e, "args") and "DPY-1001" in e.args[0].message:
-                        self.logger.error(f"Database connection error: {e}. Exiting to trigger service restart.")
+                        self.logger.error(
+                            f"Database connection error during prediction: {e}. Exiting to trigger service restart."
+                        )
                         sys.exit(1)  # Exit with a non-zero status to trigger restart
                     else:
                         self.logger.error(f"Oracle interface error for JEDITASKID: {task_id}: {e}")
                         self.handle_error(task_id, r, str(e), cols_to_write, submission_date, output_db)
-                        # Consider raising the exception here to ensure the script exits
+                        raise
 
             else:
                 # Handle invalid or empty DataFrame `r`
@@ -309,5 +344,4 @@ class PredictionUtils:
 
         except Exception as e:
             self.logger.error(f"Error processing task ID: {e}")
-            # Consider raising the exception here to ensure the script exits
             raise
