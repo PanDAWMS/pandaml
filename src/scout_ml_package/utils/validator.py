@@ -3,15 +3,13 @@ import time
 from typing import List, Generator
 import pandas as pd
 
-from scout_ml_package.utils.logger import Logger
-
 # Get the logger instance using the singleton pattern
-logger = Logger(
-    "demo_logger",
-    "/data/model-data/logs",
-    "prediction_feb25.log",
-    log_level=logging.DEBUG,
-).get_logger()
+# logger = Logger(
+#     "demo_logger",
+#     "/data/model-data/logs",
+#     "prediction_feb25.log",
+#     log_level=logging.DEBUG,
+# ).get_logger()
 
 
 class FakeListener:
@@ -56,6 +54,105 @@ class FakeListener:
             # Wait for the specified delay
             time.sleep(self.delay)
             yield task_id
+
+
+# class DataValidator:
+#     """
+#     Provides methods for validating data predictions.
+#
+#     Attributes:
+#     - None
+#
+#     Methods:
+#     - check_predictions: Checks if predictions are within acceptable ranges.
+#     - validate_prediction: Validates predictions for a given column and logs the result.
+#     - validate_ctime_prediction: Validates CTIME predictions using alternative ranges.
+#     """
+#
+#     acceptable_ranges = {
+#         "RAMCOUNT": (100, 10000),
+#         "CTIME": (0.1, 10000),
+#         "CPU_EFF": (0, 100),
+#     }
+#
+#     additional_ctime_ranges = {
+#         "low": (0.1, 10),
+#         "high": (10, 10000),
+#     }
+#
+#     @classmethod
+#     def check_predictions(cls, df: pd.DataFrame, column: str, acceptable_ranges: dict) -> bool:
+#         """
+#         Checks if predictions are within acceptable ranges.
+#
+#         Parameters:
+#         - df (pd.DataFrame): DataFrame containing predictions.
+#         - column (str): Column name to check.
+#         - acceptable_ranges (dict): Dictionary with acceptable ranges for each column.
+#
+#         Returns:
+#         - bool: True if validation succeeds (not used, raises ValueError on failure).
+#
+#         Raises:
+#         - ValueError: If predictions are outside the acceptable range.
+#         """
+#         min_val, max_val = acceptable_ranges[column]
+#         if df[column].min() < min_val or df[column].max() > max_val:
+#             raise ValueError(
+#                 f"Predictions for {column} are outside the acceptable range of {acceptable_ranges[column]}"
+#             )
+#         return True
+#
+#     @classmethod
+#     def validate_prediction(cls, df: pd.DataFrame, column: str, acceptable_ranges: dict, jeditaskid: int) -> bool:
+#         """
+#         Validates predictions for a given column and logs the result.
+#
+#         Parameters:
+#         - df (pd.DataFrame): DataFrame containing predictions.
+#         - column (str): Column name to validate.
+#         - acceptable_ranges (dict): Dictionary with acceptable ranges for each column.
+#         - jeditaskid (int): ID for logging purposes.
+#
+#         Returns:
+#         - bool: True if validation succeeds, False otherwise.
+#         """
+#         try:
+#             cls.check_predictions(df, column, acceptable_ranges)
+#             #logger.info(f"{column} predictions validated successfully.")
+#             return True
+#         except ValueError as ve:
+#             logger.error(f"{column} validation failed for JEDITASKID {jeditaskid}: {ve}")
+#             return False
+#         except Exception as e:
+#             logger.error(f"Unexpected error during {column} validation for JEDITASKID {jeditaskid}: {e}")
+#             return False
+#
+#     @classmethod
+#     def validate_ctime_prediction(cls, df: pd.DataFrame, jeditaskid: int, additional_ctime_ranges: dict) -> bool:
+#         """
+#         Validates CTIME predictions using alternative ranges.
+#
+#         Parameters:
+#         - df (pd.DataFrame): DataFrame containing predictions.
+#         - jeditaskid (int): ID for logging purposes.
+#         - additional_ctime_ranges (dict): Dictionary with alternative ranges for CTIME validation.
+#
+#         Returns:
+#         - bool: True if validation succeeds, False otherwise.
+#         """
+#         try:
+#             if df["CPUTIMEUNIT"].values[0] == "mHS06sPerEvent":
+#                 cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["low"]})
+#                 #logger.info("Validation passed with low CTIME range.")
+#                 return True
+#             else:
+#                 cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["high"]})
+#                 #logger.info("Validation passed with high CTIME range.")
+#                 return True
+#         except ValueError as ve:
+#             logger.error(f"Validation failed with all ranges: {ve}")
+#             return False
 
 
 class DataValidator:
@@ -106,7 +203,9 @@ class DataValidator:
         return True
 
     @classmethod
-    def validate_prediction(cls, df: pd.DataFrame, column: str, acceptable_ranges: dict, jeditaskid: int) -> bool:
+    def validate_prediction(
+        cls, df: pd.DataFrame, column: str, acceptable_ranges: dict, jeditaskid: int, logger: logging.Logger
+    ) -> bool:
         """
         Validates predictions for a given column and logs the result.
 
@@ -115,6 +214,7 @@ class DataValidator:
         - column (str): Column name to validate.
         - acceptable_ranges (dict): Dictionary with acceptable ranges for each column.
         - jeditaskid (int): ID for logging purposes.
+        - logger (logging.Logger): Custom logger instance.
 
         Returns:
         - bool: True if validation succeeds, False otherwise.
@@ -131,7 +231,9 @@ class DataValidator:
             return False
 
     @classmethod
-    def validate_ctime_prediction(cls, df: pd.DataFrame, jeditaskid: int, additional_ctime_ranges: dict) -> bool:
+    def validate_ctime_prediction(
+        cls, df: pd.DataFrame, jeditaskid: int, additional_ctime_ranges: dict, logger: logging.Logger
+    ) -> bool:
         """
         Validates CTIME predictions using alternative ranges.
 
@@ -139,6 +241,7 @@ class DataValidator:
         - df (pd.DataFrame): DataFrame containing predictions.
         - jeditaskid (int): ID for logging purposes.
         - additional_ctime_ranges (dict): Dictionary with alternative ranges for CTIME validation.
+        - logger (logging.Logger): Custom logger instance.
 
         Returns:
         - bool: True if validation succeeds, False otherwise.

@@ -157,7 +157,9 @@ class PredictionUtils:
         features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
         base_df.loc[:, "RAMCOUNT"] = processor.make_predictions_for_model("1", features, base_df)
 
-        if not DataValidator.validate_prediction(base_df, "RAMCOUNT", DataValidator.acceptable_ranges, jeditaskid):
+        if not DataValidator.validate_prediction(
+            base_df, "RAMCOUNT", DataValidator.acceptable_ranges, jeditaskid, self.logger
+        ):
             self.logger.error(f"RAMCOUNT validation failed for JEDITASKID {jeditaskid}.")
             return "M1 failure"
 
@@ -172,7 +174,9 @@ class PredictionUtils:
             else:
                 base_df.loc[:, "CTIME"] = processor.make_predictions_for_model("3", features, base_df)
 
-            if not DataValidator.validate_ctime_prediction(base_df, jeditaskid, DataValidator.additional_ctime_ranges):
+            if not DataValidator.validate_ctime_prediction(
+                base_df, jeditaskid, DataValidator.additional_ctime_ranges, self.logger
+            ):
                 self.logger.error(f"CTIME validation failed for JEDITASKID {jeditaskid}.")
                 cpu_unit = base_df["CPUTIMEUNIT"].values[0]
                 if cpu_unit == "mHS06sPerEvent":
@@ -194,7 +198,9 @@ class PredictionUtils:
         # Model 4: CPU_EFF
         try:
             base_df.loc[:, "CPU_EFF"] = processor.make_predictions_for_model("4", features, base_df)
-            if not DataValidator.validate_prediction(base_df, "CPU_EFF", DataValidator.acceptable_ranges, jeditaskid):
+            if not DataValidator.validate_prediction(
+                base_df, "CPU_EFF", DataValidator.acceptable_ranges, jeditaskid, self.logger
+            ):
                 self.logger.error(f"CPU_EFF validation failed for JEDITASKID {jeditaskid}.")
                 return f"{jeditaskid} M4 failure: Validation failed."
         except Exception as e:

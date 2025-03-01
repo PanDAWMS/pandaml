@@ -465,6 +465,33 @@ class ColumnTransformer:
         df["F"] = df["TRANSHOME"].apply(self.convert_transhome)
         df["CORE"] = df["CORECOUNT"].apply(self.convert_corecount)
 
+        KEEP_F_TAG = [
+            "Athena",
+            "AnalysisBase",
+            "AtlasOffline",
+            "AthAnalysis",
+            "AthSimulation",
+            "MCProd",
+            "AthGeneration",
+            "AthDerivation",
+        ]
+        KEEP_P_TAG = [
+            "jedi-run",
+            "deriv",
+            "athena-trf",
+            "jedi-athena",
+            "simul",
+            "pile",
+            "merge",
+            "evgen",
+            "reprocessing",
+            "recon",
+            "eventIndex",
+        ]
+
+        df["P"] = df["P"].apply(lambda x: x if x in KEEP_P_TAG else "others")
+        df["F"] = df["F"].apply(lambda x: x if x in KEEP_F_TAG else "others")
+
         if selected_columns is not None:
             return df[selected_columns]
         else:
