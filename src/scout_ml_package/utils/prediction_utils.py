@@ -57,7 +57,7 @@ class PredictionUtils:
                     self.process_single_task(task_id, input_db, output_db, model_manager, cols_to_write)
                 else:
                     # print("No task ID received.")
-                    self.logger.info("No task ID received.")
+                    self.logger.error("No task ID received.")
             except queue.Empty:
                 pass
             except Exception as e:
@@ -112,7 +112,7 @@ class PredictionUtils:
                 error_df[cols_to_write + ["ERROR", "SUBMISSION_DATE"]],
                 "ATLAS_PANDA.PANDAMLTEST",
             )
-            self.logger.info(f"Error logged successfully for JEDITASKID: {task_id}")
+            self.logger.info(f"Error logged for JEDITASKID: {task_id}")
         except Exception as e:
             self.logger.exception(f"Failed to handle error for JEDITASKID: {task_id}: {e}")
 
@@ -271,7 +271,7 @@ class PredictionUtils:
                         raise
 
             if task_params_fetched and isinstance(r, pd.DataFrame) and not r.empty and not r.isnull().all().any():
-                self.logger.info(f"Task parameters fetched successfully for JEDITASKID: {task_id}")
+                self.logger.info(f"Parameters fetched successfully for JEDITASKID: {task_id}")
                 # Generate prediction
                 try:
                     result = self.get_prediction(model_manager, r, task_id)
@@ -321,7 +321,7 @@ class PredictionUtils:
                             "status": "failure",
                             "submission_time": submission_date,
                         }
-                        self.logger.info(f"Failure message: {message}")
+                        self.logger.error(f"Failure message: {message}")
                         raise ValueError(f"Prediction failed for JEDITASKID: {task_id}. Result: {result}")
 
                 except Exception as e:
