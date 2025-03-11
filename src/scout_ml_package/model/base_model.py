@@ -2,6 +2,7 @@
 # To be updated later
 import os
 from typing import Callable, List, Optional, Tuple, Union
+import multiprocessing
 
 import numpy as np
 import pandas as pd
@@ -45,6 +46,22 @@ class DeviceInfo:
         print(f"Number of logical CPUs available: {len(cpus)}")
         for cpu in cpus:
             print(f" - CPU: {cpu}")
+
+    @staticmethod
+    def set_cpu_usage_to_80_percent():
+        """Set TensorFlow to use approximately 80% of the available CPU."""
+        num_cores = multiprocessing.cpu_count()
+        num_threads = int(num_cores * 0.8)
+
+        # Set the number of threads for intra- and inter-operation parallelism
+        tf.config.threading.set_intra_op_parallelism_threads(num_threads)
+        tf.config.threading.set_inter_op_parallelism_threads(num_threads)
+
+        print(f"Set TensorFlow to use {num_threads} threads out of {num_cores} cores.")
+
+
+# DeviceInfo.print_device_info()
+# DeviceInfo.set_cpu_usage_to_80_percent()
 
 
 class MultiOutputModel:

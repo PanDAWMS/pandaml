@@ -74,7 +74,6 @@ if __name__ == "__main__":
     fetch_thread.start()
 
     # Keep the main thread running
-
     print_time = time.time()
     while True:
         if time.time() - print_time >= 120:  # Check if 2 minutes have passed
