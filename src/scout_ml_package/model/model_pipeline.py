@@ -21,7 +21,7 @@ from scout_ml_package.data import (
 )
 from scout_ml_package.model import MultiOutputModel
 from scout_ml_package.model.base_model import ModelTrainer  # , ModelPipeline
-
+from scout_ml_package.model.base_model import DeviceInfo
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
@@ -56,6 +56,7 @@ class TrainingPipeline:
         Raises:
         - TypeError: If any of the parameters are not lists.
         """
+        
         if (
             not isinstance(numerical_features, list)
             or not isinstance(categorical_features, list)

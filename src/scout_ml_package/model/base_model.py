@@ -29,6 +29,18 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 
+# Set TensorFlow threading configurations at the beginning
+num_cores = multiprocessing.cpu_count()
+fraction = 0.8
+num_threads = max(1, int(num_cores * fraction))
+
+tf.config.threading.set_intra_op_parallelism_threads(num_threads)
+tf.config.threading.set_inter_op_parallelism_threads(num_threads)
+
+# Alternatively, you can use DeviceInfo.set_cpu_usage_to_fraction(0.8) here
+#DeviceInfo.set_cpu_usage_to_fraction(0.8)
+
+
 class DeviceInfo:
     @staticmethod
     def print_device_info():
@@ -48,20 +60,24 @@ class DeviceInfo:
             print(f" - CPU: {cpu}")
 
     @staticmethod
-    def set_cpu_usage_to_80_percent():
-        """Set TensorFlow to use approximately 80% of the available CPU."""
+    def set_cpu_usage_to_fraction(fraction=0.8):
+        """
+        Set TensorFlow to use a fraction of the available CPU cores.
+        
+        Args:
+            fraction (float): Fraction of CPU cores to use (e.g., 0.8 for 80%).
+        """
+        
         num_cores = multiprocessing.cpu_count()
-        num_threads = int(num_cores * 0.8)
+        #fraction = 0.7
+        num_threads = max(1, int(num_cores * fraction))
 
-        # Set the number of threads for intra- and inter-operation parallelism
         tf.config.threading.set_intra_op_parallelism_threads(num_threads)
         tf.config.threading.set_inter_op_parallelism_threads(num_threads)
+                       
+        print(f"Set TensorFlow to use {num_threads} threads out of {num_cores} logical cores.")
+        
 
-        print(f"Set TensorFlow to use {num_threads} threads out of {num_cores} cores.")
-
-
-# DeviceInfo.print_device_info()
-# DeviceInfo.set_cpu_usage_to_80_percent()
 
 
 class MultiOutputModel:
@@ -352,8 +368,9 @@ class ModelTrainer:
         self.metrics = metrics or []
         self.history = None
         self.build_function = build_function
-        DeviceInfo.print_device_info()
-
+        #DeviceInfo.print_device_info()
+        #DeviceInfo.set_cpu_usage_to_fraction(0.7)
+        
     def train(
         self,
         X_train: tf.Tensor,
@@ -482,7 +499,7 @@ class ModelPipeline:
         self.training_data = training_data
         self.selected_columns = selected_columns
         self.test_size = test_size
-
+        
     def print_X_train_shape(self, X_train: pd.DataFrame):
         """Print the shape of X_train."""
         print("Shape of X_train:", X_train.shape)
@@ -507,6 +524,9 @@ class ModelPipeline:
         self.features = numerical_features + categorical_features
         self.category_list = category_list
 
+        #DeviceInfo.print_device_info()
+        #DeviceInfo.set_cpu_usage_to_fraction(0.7)
+        
         training_preprocessor = TrainingDataPreprocessor()
         self.processed_train_data, self.encoded_columns, self.fitted_scaler = training_preprocessor.preprocess(
             self.train_df,
