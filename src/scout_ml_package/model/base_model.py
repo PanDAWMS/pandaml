@@ -228,17 +228,18 @@ class MultiOutputModel:
     def build_ramcount(self) -> Model:
         inputs = Input(shape=(self.input_shape,))
         x = tf.keras.layers.Reshape((self.input_shape, 1))(inputs)
+        x = self._add_conv_block(x, filters=512, kernel_size=5, activation="relu", pool_size=2)
         x = self._add_conv_block(x, filters=256, kernel_size=3, activation="relu", pool_size=2)
-        x = self._add_conv_block(x, filters=128, kernel_size=5, activation="relu", pool_size=2)
+        x = self._add_conv_block(x, filters=128, kernel_size=3, activation="relu", pool_size=2)
         x = Flatten()(x)
         x = self._add_dense_block(x, units=256, dropout_rate=0.5, activation="relu")
         x = self._add_dense_block(x, units=128, dropout_rate=0.3, activation="relu")
-        outputs = Dense(self.output_shape)(x)
+        outputs = Dense(self.output_shape, activation='linear')(x)
         model = Model(inputs, outputs)
         model.compile(
-            optimizer=self.optimizer,
-            loss=self.loss_function,
-            metrics=["mean_absolute_error"],
+            optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),#,self.optimizer,
+            loss="mean_absolute_error",#"mean_squared_error", #self.loss_function,
+            metrics=["RootMeanSquaredError"], #["mean_absolute_error"],
         )
         self.model = model
         return model
@@ -409,8 +410,8 @@ class ModelTrainer:
                 metrics=self.metrics,
             )
 
-        early_stopping = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
-        reduce_lr = ReduceLROnPlateau(monitor="val_loss", factor=0.4, patience=5, min_lr=1e-6)
+        early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
+        reduce_lr = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=3, min_lr=1e-4)
         self.history = model.fit(
             X_train,
             y_train,

@@ -466,29 +466,33 @@ class ColumnTransformer:
         df["F"] = df["TRANSHOME"].apply(self.convert_transhome)
         df["CORE"] = df["CORECOUNT"].apply(self.convert_corecount)
 
-        KEEP_F_TAG = [
-            "Athena",
-            "AnalysisBase",
-            "AtlasOffline",
-            "AthAnalysis",
-            "AthSimulation",
-            "MCProd",
-            "AthGeneration",
-            "AthDerivation",
-        ]
-        KEEP_P_TAG = [
-            "jedi-run",
-            "deriv",
-            "athena-trf",
-            "jedi-athena",
-            "simul",
-            "pile",
-            "merge",
-            "evgen",
-            "reprocessing",
-            "recon",
-            "eventIndex",
-        ]
+        #KEEP_F_TAG = [
+        #    "Athena",
+        #    "AnalysisBase",
+        #    "AtlasOffline",
+        #    "AthAnalysis",
+        #    "AthSimulation",
+        #    "MCProd",
+        #    "AthGeneration",
+        #    "AthDerivation",
+        ###]
+        #KEEP_P_TAG = [
+        #    "jedi-run",
+        #    "deriv",
+        #    "athena-trf",
+        #    "jedi-athena",
+        #    "simul",
+        #    "pile",
+        #    "merge",
+        #    "evgen",
+        #    "reprocessing",
+        #    "recon",
+        #    "eventIndex",
+        #]
+
+        KEEP_P_TAG = ['deriv', 'jedi-run', 'merge', 'jedi-athena', 'simul', 'pile', 'evgen', 'recon', 'reprocessing', 'athena-trf', 'run-evp', 'athena-evp']
+        KEEP_F_TAG =['AthDerivation', 'AnalysisBase', 'Athena', 'AthAnalysis','AtlasOffline', 'AthGeneration', 'AthSimulation','MCProd']
+
 
         df["P"] = df["P"].apply(lambda x: x if x in KEEP_P_TAG else "others")
         df["F"] = df["F"].apply(lambda x: x if x in KEEP_F_TAG else "others")
@@ -770,36 +774,38 @@ class PredictionPipeline:
             "CORE",
             "CPUTIMEUNIT",
         ]
+
         self.unique_elements_categories = [
             ["managed", "user"],
             [
-                "simul",
-                "jedi-run",
                 "deriv",
                 "pile",
-                "reprocessing",
-                "merge",
-                "jedi-athena",
+                "jedi-run",
+                "simul",
                 "athena-trf",
-                "evgen",
-                "eventIndex",
-                "others",
+                "jedi-athena",
                 "recon",
+                "reprocessing",
+                "evgen",
+                "others",
+                "merge",
+                "run-evp",
+                "athena-evp",
             ],
             [
                 "Athena",
-                "AnalysisBase",
-                "AthDerivation",
-                "AthAnalysis",
-                "AthGeneration",
                 "AtlasOffline",
-                "AthSimulation",
                 "others",
+                "AthDerivation",
+                "AnalysisBase",
+                "AthAnalysis",
+                "AthSimulation",
+                "AthGeneration",
                 "MCProd",
             ],
             ["M", "S"],
             ["HS06sPerEvent", "mHS06sPerEvent"],
-        ]
+            ]
 
     def make_predictions_for_model(
         self, model_sequence: str, features: List[str], input_df: pd.DataFrame
