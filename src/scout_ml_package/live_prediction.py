@@ -3,6 +3,7 @@ import queue
 import threading
 import time
 import warnings
+from datetime import datetime
 
 # Third-party imports
 
@@ -19,7 +20,11 @@ from scout_ml_package.utils.message import ConfigLoader, MyListener
 warnings.filterwarnings("ignore", category=UserWarning, module="pandas.io.sql")
 last_logged = time.time()
 
-logger = Logger("demo_logger", "/data/model-data/logs", "prediction_feb25.log")
+current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+logname = f"prediction_{current_datetime}.log"
+# Create a custom logger
+logger = Logger("scout_logger", "/data/model-data/logs", logname)
+
 
 if __name__ == "__main__":
     base_path = "/data/model-data/"  # "/data/test/"

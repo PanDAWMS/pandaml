@@ -260,6 +260,7 @@ class PredictionUtils:
                         # Process and write results to the output database
                         result = result[cols_to_write].copy()
                         result["SUBMISSION_DATE"] = datetime.now()
+                        result["MTAG"] = 'V1.MAR.25.2025'
                         output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
 
                         # Prepare success message

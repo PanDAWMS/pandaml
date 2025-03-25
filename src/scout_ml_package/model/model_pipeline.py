@@ -461,9 +461,14 @@ class ColumnTransformer:
         if selected_columns is not None and not isinstance(selected_columns, list):
             raise TypeError("selected_columns must be a list or None")
 
+    
         df["P"] = df["PROCESSINGTYPE"].apply(self.convert_processingtype)
         df["F"] = df["TRANSHOME"].apply(self.convert_transhome)
         df["CORE"] = df["CORECOUNT"].apply(self.convert_corecount)
+        KEEP_P_TAG = ['deriv', 'jedi-run', 'merge', 'jedi-athena', 'simul', 'pile', 'evgen', 'recon', 'reprocessing', 'athena-trf', 'run-evp', 'athena-evp']
+        KEEP_F_TAG =['AthDerivation', 'AnalysisBase', 'Athena', 'AthAnalysis','AtlasOffline', 'AthGeneration', 'AthSimulation','MCProd']
+        df['P'] = df['P'].apply(lambda x: x if x in KEEP_P_TAG else 'others')
+        df['F'] = df['F'].apply(lambda x: x if x in KEEP_F_TAG else 'others')
 
         if selected_columns is not None:
             return df[selected_columns]
@@ -744,20 +749,7 @@ class PredictionPipeline:
         ]
         self.unique_elements_categories = [
             ["managed", "user"],
-            [
-                "simul",
-                "jedi-run",
-                "deriv",
-                "pile",
-                "reprocessing",
-                "merge",
-                "jedi-athena",
-                "athena-trf",
-                "evgen",
-                "eventIndex",
-                "others",
-                "recon",
-            ],
+            ['deriv', 'pile', 'jedi-run', 'simul','athena-trf', 'jedi-athena', 'recon', 'reprocessing', 'evgen', 'others','merge', 'run-evp', 'athena-evp'],
             [
                 "Athena",
                 "AnalysisBase",
@@ -802,6 +794,7 @@ class PredictionPipeline:
                 self.category_sequence,
                 self.unique_elements_categories,
             )
+            print(processed_data.shape, features_to_train)
             return mh.make_predictions(processed_data, features_to_train)
         except Exception as e:
             print(f"Error processing data with model sequence {model_sequence}: {e}")
