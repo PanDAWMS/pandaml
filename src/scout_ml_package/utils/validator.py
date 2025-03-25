@@ -6,12 +6,12 @@ import pandas as pd
 from scout_ml_package.utils.logger import Logger
 
 # Get the logger instance using the singleton pattern
-logger = Logger(
-    "demo_logger",
-    "/data/model-data/logs",
-    "prediction_feb25.log",
-    log_level=logging.DEBUG,
-).get_logger()
+#logger = Logger(
+#    "demo_logger",
+#    "/data/model-data/logs",
+#    "prediction_feb25.log",
+#    log_level=logging.DEBUG,
+#).get_logger()
 
 
 class FakeListener:
@@ -106,7 +106,7 @@ class DataValidator:
         return True
 
     @classmethod
-    def validate_prediction(cls, df: pd.DataFrame, column: str, acceptable_ranges: dict, jeditaskid: int) -> bool:
+    def validate_prediction(cls, df: pd.DataFrame, column: str, acceptable_ranges: dict, jeditaskid: int, logger: logging.Logger) -> bool:
         """
         Validates predictions for a given column and logs the result.
 
@@ -115,13 +115,14 @@ class DataValidator:
         - column (str): Column name to validate.
         - acceptable_ranges (dict): Dictionary with acceptable ranges for each column.
         - jeditaskid (int): ID for logging purposes.
+        - - logger (logging.Logger): Custom logger instance.
 
         Returns:
         - bool: True if validation succeeds, False otherwise.
         """
         try:
             cls.check_predictions(df, column, acceptable_ranges)
-            logger.info(f"{column} predictions validated successfully.")
+            #logger.info(f"{column} predictions validated successfully.")
             return True
         except ValueError as ve:
             logger.error(f"{column} validation failed for JEDITASKID {jeditaskid}: {ve}")
@@ -131,7 +132,7 @@ class DataValidator:
             return False
 
     @classmethod
-    def validate_ctime_prediction(cls, df: pd.DataFrame, jeditaskid: int, additional_ctime_ranges: dict) -> bool:
+    def validate_ctime_prediction(cls, df: pd.DataFrame, jeditaskid: int, additional_ctime_ranges: dict, logger: logging.Logger) -> bool:
         """
         Validates CTIME predictions using alternative ranges.
 
@@ -146,11 +147,11 @@ class DataValidator:
         try:
             if df["CPUTIMEUNIT"].values[0] == "mHS06sPerEvent":
                 cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["low"]})
-                logger.info("Validation passed with low CTIME range.")
+                #logger.info("Validation passed with low CTIME range.")
                 return True
             else:
                 cls.check_predictions(df, "CTIME", {"CTIME": additional_ctime_ranges["high"]})
-                logger.info("Validation passed with high CTIME range.")
+                #logger.info("Validation passed with high CTIME range.")
                 return True
         except ValueError as ve:
             logger.error(f"Validation failed with all ranges: {ve}")
