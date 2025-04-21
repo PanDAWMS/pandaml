@@ -794,7 +794,7 @@ class PredictionPipeline:
                 self.category_sequence,
                 self.unique_elements_categories,
             )
-            print(processed_data.shape, features_to_train)
+            #print(processed_data.shape, features_to_train)
             return mh.make_predictions(processed_data, features_to_train)
         except Exception as e:
             print(f"Error processing data with model sequence {model_sequence}: {e}")

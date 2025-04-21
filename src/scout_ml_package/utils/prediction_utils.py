@@ -62,7 +62,7 @@ class PredictionUtils:
                 pass
             except Exception as e:
                 self.logger.error(f"Error processing task ID: {e}")
-                print(f"Error processing task ID: {e}")
+                #print(f"Error processing task ID: {e}")
 
     def handle_error(
         self,
@@ -202,7 +202,7 @@ class PredictionUtils:
             return f"M4 failure: {str(e)}"
 
         # Update features for subsequent models
-        processor.numerical_features.append("CPU_EFF")
+        #processor.numerical_features.append("CPU_EFF")
         features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
 
         # Model 5: IOINTENSITY
@@ -260,7 +260,7 @@ class PredictionUtils:
                         # Process and write results to the output database
                         result = result[cols_to_write].copy()
                         result["SUBMISSION_DATE"] = datetime.now()
-                        result["MTAG"] = 'V1.MAR.25.2025'
+                        result["MTAG"] = 'V2.APR.04.2025'
                         output_db.write_data(result, "ATLAS_PANDA.PANDAMLTEST")
 
                         # Prepare success message
