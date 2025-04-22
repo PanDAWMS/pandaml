@@ -46,8 +46,6 @@ git clone git@github.com:PanDAWMS/pandaml.git
 
 
 3. Create a virtual environment (recommended):
-
-- Create the virtual environment:
   ```
   python -m venv venv
   ```
@@ -63,3 +61,8 @@ pip install -r requirements.txt
 ```
 python -m scout_ml_package.live_prediction
 ```
+
+## Authors
+------------
+
+- **Tasnuva Chowdhury** (Email: ch.tasnuva@cern.ch)

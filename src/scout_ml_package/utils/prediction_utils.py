@@ -16,7 +16,16 @@ from scout_ml_package.utils.validator import DataValidator
 
 import logging
 from typing import Optional
-
+VALID_PAIRS = {
+    ("deriv", "Athena", "managed"),
+    ("deriv", "AthDerivation", "managed"),
+    ("merge", "Athena", "managed"),
+    ("simul", "Athena", "managed"),
+    ("simul", "AtlasOffline", "managed"),
+    ("recon", "Athena", "managed"),
+    ("pile", "Athena", "managed"),
+    ("evgen", "AthGeneration", "managed"),
+}
 
 class PredictionUtils:
     def __init__(self, logger: Optional[logging.Logger] = None):
@@ -152,6 +161,11 @@ class PredictionUtils:
         jeditaskid = r["JEDITASKID"].values[0]
         processor = PredictionPipeline(model_manager)
         base_df = ColumnTransformer().transform_features(r)
+        # Apply filters for unique pairs
+        if not base_df.apply(lambda row: (row['P'], row['F'], row['PRODSOURCELABEL']) in VALID_PAIRS, axis=1).any():
+            message = f"{jeditaskid} is not in accepted categories for Processing, Framework and PRODSOURCELABEL"
+            self.logger.error(message)
+            return None
 
         # Model 1: RAMCOUNT
         features = ["JEDITASKID"] + processor.numerical_features + processor.category_sequence
